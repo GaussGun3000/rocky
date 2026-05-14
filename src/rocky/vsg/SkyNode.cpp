@@ -115,14 +115,17 @@ namespace
 
     vsg::ref_ptr<vsg::ShaderSet> makeAtmoShaderSet(VSGContext context)
     {
-        auto file = vsg::findFile(ATMOSPHERE_VERT_SHADER, context->searchPaths);
-        Log()->info("Loading atmosphere vertex shader from: {}", file.string());
-
         auto vertexShader = vsg::ShaderStage::read(
             VK_SHADER_STAGE_VERTEX_BIT,
             "main",
             vsg::findFile(ATMOSPHERE_VERT_SHADER, context->searchPaths),
             context->readerWriterOptions);
+
+        if (!vertexShader)
+        {
+            Log()->warn("Failed to load shader: {}", ATMOSPHERE_VERT_SHADER);
+            return {};
+        }
 
         auto fragmentShader = vsg::ShaderStage::read(
             VK_SHADER_STAGE_FRAGMENT_BIT,
@@ -130,9 +133,10 @@ namespace
             vsg::findFile(ATMOSPHERE_FRAG_SHADER, context->searchPaths),
             context->readerWriterOptions);
 
-        if (!vertexShader || !fragmentShader)
+        if (!fragmentShader)
         {
-            return { };
+            Log()->warn("Failed to load shader: {}", ATMOSPHERE_FRAG_SHADER);
+            return {};
         }
 
         auto shaderSet = vsg::ShaderSet::create(vsg::ShaderStages{ vertexShader, fragmentShader });

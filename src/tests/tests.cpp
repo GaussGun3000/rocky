@@ -2,7 +2,10 @@
 #include "catch.hpp"
 
 #include <rocky/rocky.h>
+#include <atomic>
+#include <chrono>
 #include <random>
+#include <thread>
 #include <unordered_map>
 
 #define ROCKY_EXPOSE_JSON_FUNCTIONS
@@ -137,6 +140,60 @@ TEST_CASE("Threading")
     CHECK(f2.empty() == false);
     CHECK(f2.available() == true);
     CHECK(f2.value() == 123);
+
+    SECTION("runtime shutdown joins worker threads and prevents restart")
+    {
+        jobs::runtime runtime;
+        auto pool = runtime.get_pool("shutdown-test", 1);
+        REQUIRE(pool != nullptr);
+
+        std::atomic_bool job_started = false;
+        std::atomic_bool release_job = false;
+        std::atomic_bool shutdown_finished = false;
+
+        auto result = runtime.dispatch(
+            [&](jobs::cancelable&) -> int
+            {
+                job_started = true;
+                while (!release_job)
+                {
+                    std::this_thread::sleep_for(std::chrono::milliseconds(1));
+                }
+                return 42;
+            },
+            jobs::context{ "blocking shutdown test", pool });
+
+        for (unsigned i = 0; i < 1000 && !job_started; ++i)
+        {
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        }
+        REQUIRE(job_started);
+
+        std::thread shutdown_thread([&]()
+            {
+                runtime.shutdown();
+                shutdown_finished = true;
+            });
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(20));
+        CHECK(shutdown_finished == false);
+
+        release_job = true;
+        shutdown_thread.join();
+
+        CHECK(shutdown_finished == true);
+        CHECK(result.available());
+        CHECK(result.value() == 42);
+        CHECK(runtime.alive() == false);
+        CHECK(runtime.get_pool("shutdown-test", 1) == nullptr);
+
+        std::atomic_bool post_shutdown_job_ran = false;
+        runtime.dispatch([&]() { post_shutdown_job_ran = true; });
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(20));
+        CHECK(post_shutdown_job_ran == false);
+        CHECK(runtime.total() == 0);
+    }
 }
 
 TEST_CASE("Math")

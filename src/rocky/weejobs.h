@@ -535,6 +535,7 @@ namespace WEEJOBS_NAMESPACE
         ~jobpool()
         {
             stop_threads();
+            join_threads();
         }
 
         //! Name of this job pool
@@ -806,6 +807,9 @@ namespace WEEJOBS_NAMESPACE
     {
         std::lock_guard<std::mutex> lock(_pools_mutex);
 
+        if (!_alive)
+            return nullptr;
+
         for (auto pool : _pools)
         {
             if (pool->name() == name)
@@ -821,19 +825,56 @@ namespace WEEJOBS_NAMESPACE
     // dispatches a function to the appropriate job pool.
     inline void runtime::pool_dispatch(std::function<bool()> delegate, const context& context)
     {
-        auto pool = context.pool ? context.pool : get_pool({});
-        if (pool)
         {
-            pool->_dispatch_delegate(delegate, context);
+            std::lock_guard<std::mutex> lock(_pools_mutex);
 
-            // if work stealing is enabled, wake up all pools
-            if (_stealing_allowed)
+            if (!_alive)
+                return;
+
+            jobpool* pool = nullptr;
+
+            if (context.pool)
             {
-                std::lock_guard<std::mutex> lock(_pools_mutex);
-
-                for (auto pool : _pools)
+                for (auto p : _pools)
                 {
-                    pool->_block.notify_all();
+                    if (p == context.pool)
+                    {
+                        pool = p;
+                        break;
+                    }
+                }
+            }
+            else
+            {
+                for (auto p : _pools)
+                {
+                    if (p->name().empty())
+                    {
+                        pool = p;
+                        break;
+                    }
+                }
+
+                if (!pool)
+                {
+                    pool = new jobpool(*this, {}, 2u);
+                    _pools.push_back(pool);
+                    _metrics._pools.push_back(&pool->_metrics);
+                    pool->start_threads();
+                }
+            }
+
+            if (pool)
+            {
+                pool->_dispatch_delegate(delegate, context);
+
+                // if work stealing is enabled, wake up all pools
+                if (_stealing_allowed)
+                {
+                    for (auto pool : _pools)
+                    {
+                        pool->_block.notify_all();
+                    }
                 }
             }
         }
@@ -937,23 +978,30 @@ namespace WEEJOBS_NAMESPACE
 
     inline void runtime::shutdown()
     {
-        _alive = false;
+        std::vector<jobpool*> pools;
+        {
+            std::lock_guard<std::mutex> lock(_pools_mutex);
+
+            if (!_alive.exchange(false) && _pools.empty())
+                return;
+
+            pools.swap(_pools);
+            _metrics._pools.clear();
+        }
 
         //std::cout << "stopping " << _pools.size() << " threads..." << std::endl;
-        for (auto& pool : _pools)
+        for (auto& pool : pools)
             if (pool)
                 pool->stop_threads();
 
         //std::cout << "joining " << _pools.size() << " threads..." << std::endl;
-        for (auto& pool : _pools)
+        for (auto& pool : pools)
             if (pool)
                 pool->join_threads();
 
-        for (auto& pool : _pools)
+        for (auto& pool : pools)
             if (pool)
                 delete pool;
-
-        _pools.clear();
     }
 
     inline bool runtime::alive()

@@ -36,12 +36,9 @@ namespace
 
         VSG_to_Spdlog_Logger()
         {
-            vsg_logger = spdlog::get("vsg");
-            if (!vsg_logger)
-            {
-                vsg_logger = spdlog::stdout_color_mt("vsg");
-                vsg_logger->set_pattern("%^[%n %l]%$ %v");
-            }
+            auto sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
+            vsg_logger = std::make_shared<spdlog::logger>("vsg", sink);
+            vsg_logger->set_pattern("%^[%n %l]%$ %v");
         }
 
     protected:

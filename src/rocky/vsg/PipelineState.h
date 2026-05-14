@@ -18,10 +18,10 @@ namespace ROCKY_NAMESPACE
     class MapNode;
 
     /**
-    * Custom ViewDependentState that adds data for Rocky rendering.
+    * Extends vsg::ViewDependentState to add data for Rocky rendering.
     * Shader usage (where "binding" === VSG_VIEW_DEPENDENT_ROCKY_BINDING)
     *
-    *   layout(set = 1, binding = 10) uniform RockyVDS {
+    *   layout(set = 1, binding = XXX) uniform RockyVDS {
     *       mat4 inverseViewMatrix;
     *       vec2 ellipsoidAxes;
     *       float stereographic;

@@ -7,6 +7,7 @@
 #include "Context.h"
 #include <spdlog/spdlog.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
+#include <atomic>
 #include <mutex>
 
 ROCKY_ABOUT(spdlog, std::to_string(SPDLOG_VER_MAJOR) + "." + std::to_string(SPDLOG_VER_MINOR) + "." + std::to_string(SPDLOG_VER_PATCH));
@@ -14,48 +15,63 @@ ROCKY_ABOUT(spdlog, std::to_string(SPDLOG_VER_MAJOR) + "." + std::to_string(SPDL
 using namespace ROCKY_NAMESPACE;
 using namespace ROCKY_NAMESPACE::detail;
 
+namespace
+{
+    struct LogShutdownGuard
+    {
+        std::atomic_bool* shutting_down;
+
+        ~LogShutdownGuard()
+        {
+            shutting_down->store(true, std::memory_order_release);
+        }
+    };
+
+    std::atomic_bool& logShuttingDown()
+    {
+        // memcheck will report this as a leak. That is ok.
+        static auto* value = new std::atomic_bool(false);
+        return *value;
+    }
+
+    Logger nullLogger()
+    {
+        static Logger* logger = new Logger(std::make_shared<spdlog::logger>("rocky.shutdown"));
+        (*logger)->set_level(spdlog::level::off);
+        return *logger;
+    }
+}
+
 Logger rocky::Log()
 {
     static std::once_flag s_once;
+    static Logger s_logger;
+    static LogShutdownGuard s_shutdown_guard{ &logShuttingDown() };
+
+    if (logShuttingDown().load(std::memory_order_acquire))
+        return nullLogger();
 
     std::call_once(s_once, []()
         {
             const spdlog::level::level_enum default_level = spdlog::level::info;
-            try
-            {
-                auto logger = spdlog::stdout_color_mt("rocky");
-                logger->set_pattern("%^[%n %l]%$ %v");
+            (void)nullLogger();
 
-                auto log_level = getEnvVar("ROCKY_LOG_LEVEL");
-                if (!log_level.has_value()) log_level = getEnvVar("ROCKY_NOTIFY_LEVEL");
-                if (!log_level.has_value()) logger->set_level(default_level);
-                else if (ciEquals(log_level.value(), "trace")) logger->set_level(spdlog::level::trace);
-                else if (ciEquals(log_level.value(), "info")) logger->set_level(spdlog::level::info);
-                else if (ciEquals(log_level.value(), "debug")) logger->set_level(spdlog::level::debug);
-                else if (ciEquals(log_level.value(), "warn")) logger->set_level(spdlog::level::warn);
-                else if (ciEquals(log_level.value(), "error")) logger->set_level(spdlog::level::err);
-                else if (ciEquals(log_level.value(), "critical")) logger->set_level(spdlog::level::critical);
-                else if (ciEquals(log_level.value(), "off")) logger->set_level(spdlog::level::off);
-                else logger->set_level(default_level);
-            }
-            catch (spdlog::spdlog_ex ex)
-            {
-                std::cout << "SPDLOG EXCEPTION: " << std::string(ex.what()) << std::endl;
-                std::exit(-1);
-            }
+            auto sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
+            s_logger = std::make_shared<spdlog::logger>("rocky", sink);
+            s_logger->set_pattern("%^[%n %l]%$ %v");
+
+            auto log_level = getEnvVar("ROCKY_LOG_LEVEL");
+            if (!log_level.has_value()) log_level = getEnvVar("ROCKY_NOTIFY_LEVEL");
+            if (!log_level.has_value()) s_logger->set_level(default_level);
+            else if (ciEquals(log_level.value(), "trace")) s_logger->set_level(spdlog::level::trace);
+            else if (ciEquals(log_level.value(), "info")) s_logger->set_level(spdlog::level::info);
+            else if (ciEquals(log_level.value(), "debug")) s_logger->set_level(spdlog::level::debug);
+            else if (ciEquals(log_level.value(), "warn")) s_logger->set_level(spdlog::level::warn);
+            else if (ciEquals(log_level.value(), "error")) s_logger->set_level(spdlog::level::err);
+            else if (ciEquals(log_level.value(), "critical")) s_logger->set_level(spdlog::level::critical);
+            else if (ciEquals(log_level.value(), "off")) s_logger->set_level(spdlog::level::off);
+            else s_logger->set_level(default_level);
         });
 
-    auto logger = spdlog::get("rocky");
-
-    if (!logger)
-    {
-        // catch for calling Log() after static destruction of the spdlog internal instance manager..
-        // at least we'll get stderr output at the WARN level
-        auto sink = std::make_shared<spdlog::sinks::stderr_color_sink_mt>();
-        logger = std::make_shared<spdlog::logger>("rocky", sink);
-        logger->set_level(spdlog::level::warn);
-        logger->set_pattern("%^[%n %l]%$ %v");
-    }
-
-    return logger;
+    return s_logger;
 }

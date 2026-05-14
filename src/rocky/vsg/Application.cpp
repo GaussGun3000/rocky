@@ -291,6 +291,29 @@ Application::~Application()
     Log()->debug("Quitting background services...");
     background.quit();
 
+    // Release app-owned scene/view resources while the context is still alive.
+    // Several of these objects own weejobs futures; dropping them first gives
+    // those futures a chance to cancel before the runtime joins all threads.
+    if (viewer)
+    {
+        viewer->close();
+        if (!viewer->windows().empty())
+        {
+            viewer->deviceWaitIdle();
+        }
+    }
+
+    while (!display.windows().empty())
+    {
+        display.removeWindow(display.windows().back());
+    }
+
+    _subscriptions.clear();
+
+    systemsNode = {};
+    mapNode = {};
+    scene = {};
+
     Log()->debug("Waiting for all jobs to stop...");
     io().services().jobs.shutdown();
 }

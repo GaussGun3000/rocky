@@ -12,6 +12,9 @@ using namespace ROCKY_NAMESPACE;
 
 auto Demo_Environment = [](Application& app)
 {
+    static vsg::RegionOfInterest* roi = nullptr;
+    static bool useCameraROI = false;
+
     auto mainView = app.display.window(0).view(0);
     auto skyNode = mainView.find<SkyNode>();
 
@@ -37,6 +40,35 @@ auto Demo_Environment = [](Application& app)
         return;
     }
 
+    if (skyNode->sun->shadowSettings)
+    {
+        // install a shadowing RegionOfInterest the first time through:
+        if (!roi)
+        {
+            auto region = vsg::RegionOfInterest::create();
+            roi = region;
+            skyNode->children.emplace_back(region);
+            //app.scene->children.insert(app.scene->children.begin(), region);
+        }
+
+        // apply the ROI if enabled:
+        if (auto manip = MapManipulator::get(mainView.vsgView))
+        {
+            roi->points.clear();
+            if (useCameraROI)
+            {
+                auto vp = manip->viewpoint();
+                double r = vp.range->value();
+                roi->points.emplace_back(to_vsg(vp.position() + glm::dvec3(r, 0, 0)));
+                roi->points.emplace_back(to_vsg(vp.position() + glm::dvec3(-r, 0, 0)));
+                roi->points.emplace_back(to_vsg(vp.position() + glm::dvec3(0, r, 0)));
+                roi->points.emplace_back(to_vsg(vp.position() + glm::dvec3(0, -r, 0)));
+                roi->points.emplace_back(to_vsg(vp.position() + glm::dvec3(0, 0, r)));
+                roi->points.emplace_back(to_vsg(vp.position() + glm::dvec3(0, 0, -r)));
+            }
+        }
+    }
+
     static DateTime dt;
 
     if (ImGuiLTable::Begin("environment"))
@@ -56,6 +88,17 @@ auto Demo_Environment = [](Application& app)
             skyNode->setShowAtmosphere(atmo);
         }
 
+        if (skyNode->sun->shadowSettings)
+        {
+            ImGuiLTable::SeparatorText("Shadows");
+            // control the shadow distance in the main view:
+            ImGuiLTable::SliderDouble("Shadow max distance", &mainView.vsgView->viewDependentState->maxShadowDistance, 0.0f, 50000.0f, "%.0lf", ImGuiSliderFlags_Logarithmic);
+            ImGuiLTable::SliderDouble("Shadow map bias", &mainView.vsgView->viewDependentState->shadowMapBias, 0.0, 0.1, "%.5lf", ImGuiSliderFlags_Logarithmic);
+            ImGuiLTable::SliderDouble("Shadow lambda", &mainView.vsgView->viewDependentState->lambda, 0.0, 1.0, "%.3lf");
+
+            // add/move a shadowing ROI on the camera:
+            ImGuiLTable::Checkbox("Camera ROI", &useCameraROI);
+        }
         ImGuiLTable::End();
     }
 };
