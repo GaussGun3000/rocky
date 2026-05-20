@@ -1,5 +1,5 @@
 set PATH=%CD%\install\bin;%PATH%
-set VCPKG_DIR=%CD%\build\vcpkg_installed
+set VCPKG_DIR=%CD%\x64-windows\vcpkg_installed
 set PATH=%VCPKG_DIR%\x64-windows-release\bin;%PATH%
 set PATH=%VCPKG_DIR%\x64-windows-release\plugins;%PATH%
 set PATH=%VCPKG_DIR%\x64-windows-release\tools\proj;%PATH%

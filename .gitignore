@@ -1,4 +1,4 @@
-build/
-vcpkg/
-install/
+build/vcpkg
+build/x64-windows
+build/install/
 imgui.ini
