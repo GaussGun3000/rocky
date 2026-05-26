@@ -7,7 +7,6 @@ cmake -S .. ^
       -B x64-windows ^
       -A x64 ^
       -DCMAKE_BUILD_TYPE=RelWithDebInfo ^
-      -DCMAKE_BUILD_TYPE=RelWithDebInfo ^
       -DCMAKE_INSTALL_PREFIX=install ^
       -DCMAKE_TOOLCHAIN_FILE=%VCPKG_DIR%\scripts\buildsystems\vcpkg.cmake ^
       -DVCPKG_MANIFEST_DIR=.. ^
