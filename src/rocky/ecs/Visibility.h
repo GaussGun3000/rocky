@@ -35,11 +35,6 @@ namespace ROCKY_NAMESPACE
         //! Frame number when this entity was last visible in each view,
         //! or ~0 if not in use.
         ViewLocal<std::int64_t> frame;
-
-        //! Activate the ability to control visibility based on visitation frame
-        inline void enableFrameAgeVisibility(bool on) {
-            frame.fill(on ? 0 : static_cast<std::int64_t>(UINT_MAX));
-        }
     };
 
     inline bool visible(const Visibility& vis, const RenderingState& rs)

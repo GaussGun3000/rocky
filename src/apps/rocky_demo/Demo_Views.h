@@ -127,7 +127,7 @@ auto Demo_Views = [](Application& app)
 
                         if (ortho)
                         {
-                            if (auto vds = dynamic_cast<RockyViewDependentState*>(view.vsgView->viewDependentState.get()))
+                            if (auto vds = viewDependentState(view.vsgView))
                             {
                                 if (ImGuiLTable::Checkbox("Stereographic\n(Experimental)", &vds->uniforms().stereographic))
                                 {

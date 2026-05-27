@@ -22,19 +22,24 @@ auto Demo_Environment = [](Application& app)
     {
         ImGui::TextColored(ImVec4(1, 0, 0, 1), "%s", "Sky is not installed; use --sky");
 
-#if 0
         if (ImGui::Button("Install sky"))
         {
             app.vsgcontext->onNextUpdate([&app, mainView](VSGContext vsgcontext)
                 {
-                    if (auto light = detail::find<vsg::Light>(app.scene))
+                    // We added a "headlight" at startup and it's under an AbsoluteTransform;
+                    // remove it in favor of the new SkyNode:
+                    if (auto light = detail::find<vsg::AbsoluteTransform>(app.scene))
                         app.scene->children.erase(std::remove(app.scene->children.begin(), app.scene->children.end(), light), app.scene->children.end());
+
                     auto skyNode = SkyNode::create(vsgcontext);
-                    mainView.vsgView->children.insert(mainView.vsgView->children.begin(), skyNode);
+                    app.scene->addChild(skyNode);
+
+                    if (!app.mapNode->terrainSettings().lighting.has_value())
+                        app.mapNode->terrainSettings().lighting = true;
+
                     vsgcontext->viewer()->compile();
                 });
         }
-#endif
 
         app.vsgcontext->requestFrame();
         return;
@@ -91,14 +96,33 @@ auto Demo_Environment = [](Application& app)
         if (skyNode->sun->shadowSettings)
         {
             ImGuiLTable::SeparatorText("Shadows");
-            // control the shadow distance in the main view:
-            ImGuiLTable::SliderDouble("Shadow max distance", &mainView.vsgView->viewDependentState->maxShadowDistance, 0.0f, 50000.0f, "%.0lf", ImGuiSliderFlags_Logarithmic);
-            ImGuiLTable::SliderDouble("Shadow map bias", &mainView.vsgView->viewDependentState->shadowMapBias, 0.0, 0.1, "%.5lf", ImGuiSliderFlags_Logarithmic);
-            ImGuiLTable::SliderDouble("Shadow lambda", &mainView.vsgView->viewDependentState->lambda, 0.0, 1.0, "%.3lf");
+
+            if (auto* vds = viewDependentState(mainView.vsgView))
+            {
+                ImGuiLTable::SliderDouble("Shadow max distance", &vds->maxShadowDistance, 0.0f, 50000.0f, "%.0lf", ImGuiSliderFlags_Logarithmic);
+                ImGuiLTable::SliderDouble("Shadow map bias", &vds->shadowMapBias, 0.0, 0.1, "%.5lf", ImGuiSliderFlags_Logarithmic);
+                ImGuiLTable::SliderDouble("Shadow lambda", &vds->lambda, 0.0, 1.0, "%.3lf");
+            }
 
             // add/move a shadowing ROI on the camera:
             ImGuiLTable::Checkbox("Camera ROI", &useCameraROI);
         }
+
         ImGuiLTable::End();
+
+        if (!skyNode->sun->shadowSettings)
+        {
+            ImGui::TextUnformatted("Shadows are not enabled; use --shadows");
+            if (ImGui::Button("Enable shadows now"))
+            {
+                app.vsgcontext->onNextUpdate([&app, skyNode](VSGContext vsgcontext)
+                    {
+                        skyNode->sun->shadowSettings = vsg::HardShadows::create(4);
+                        vsgcontext->shaderCompileSettings->defines.insert("VSG_SHADOWS_HARD");
+                        vsgcontext->viewer()->compile();
+                    });
+            }
+        }
+
     }
 };

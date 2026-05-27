@@ -23,6 +23,7 @@ namespace ROCKY_NAMESPACE
         vsg::dmat4 proj;      // projection matrix
         vsg::dmat4 modelview; // modelview matrix
         vsg::dmat4 mvp;       // modelview-projection matrix
+        vsg::dvec4 position;  // view-space position after optional projection
         vsg::vec4 viewport;   // pixel-space viewport
         bool passingCull = true; // whether the transform passes frustum/horizon culling
 
@@ -56,7 +57,7 @@ namespace ROCKY_NAMESPACE
         float devicePixelRatio = 1.0;
 
         // Per-view data, calculated during the record traversal
-        ViewLocal<TransformViewDetail> views;
+        mutable ViewLocal<TransformViewDetail> views;
 
         //! Reset any cached data for the given view so the object
         //! can recalibrate itself after an SRS change (e.g.)

@@ -161,9 +161,9 @@ auto Demo_Mesh_Relative = [](Application& app)
     {
         auto [lock, reg] = app.registry.read();
 
-        auto& v = reg.get<Visibility>(entity).visible[0];
-        if (ImGuiLTable::Checkbox("Show", &v))
-            setVisible(reg, entity, v);
+        auto& visibility = reg.get<Visibility>(entity);
+        if (ImGuiLTable::Checkbox("Show", &visibility.visible[0]))
+            visibility.visible = visibility.visible[0];
 
         auto& transform = reg.get<Transform>(entity);
 

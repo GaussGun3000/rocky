@@ -216,7 +216,7 @@ Application::ctor(int& argc, char** argv)
 
         if (commandLine.read("--shadows"))
         {
-            skyNode->sun->shadowSettings = vsg::HardShadows::create(2);
+            skyNode->sun->shadowSettings = vsg::HardShadows::create(4);
             vsgcontext->shaderCompileSettings->defines.insert("VSG_SHADOWS_HARD");
         }
     }

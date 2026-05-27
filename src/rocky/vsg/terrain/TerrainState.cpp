@@ -7,7 +7,7 @@
 #include "TerrainNode.h"
 #include "TerrainSettings.h"
 #include "../VSGUtils.h"
-#include "../PipelineState.h"
+#include "../ViewDependentState.h"
 
 #include <rocky/Color.h>
 #include <rocky/Heightfield.h>
@@ -222,7 +222,7 @@ TerrainState::createShaderSet(VSGContext context) const
         VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1,
         VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, {});
 
-    PipelineUtils::addViewDependentState(shaderSet);
+    addViewDependentStateToShaderSet(shaderSet);
 
     // Note: 128 is the maximum size required by the Vulkan spec, 
     // so don't increase it :)
@@ -258,7 +258,7 @@ TerrainState::createPipelineConfig(VSGContext context) const
     config->enableDescriptor(TERRAIN_SETTINGS_UBO_NAME);
     config->enableDescriptor(MAP_SETTINGS_UBO_NAME);
 
-    PipelineUtils::enableViewDependentState(config);
+    enableViewDependentStateUniforms(config);
 
     struct SetPipelineStates : public vsg::Visitor
     {

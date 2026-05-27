@@ -25,7 +25,7 @@
 #include <rocky/vsg/NodePager.h>
 #include <rocky/vsg/GeoTransform.h>
 #include <rocky/vsg/PixelScaleTransform.h>
-#include <rocky/vsg/PipelineState.h>
+#include <rocky/vsg/ViewDependentState.h>
 #include <rocky/vsg/ecs/FeatureBuilder.h>
 #include <rocky/vsg/ecs/EntityNode.h>
 #include <rocky/vsg/ecs/ECSTypes.h>

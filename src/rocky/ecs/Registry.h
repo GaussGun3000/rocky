@@ -53,6 +53,10 @@ namespace ROCKY_NAMESPACE
         //! 
         //! usage:
         //!   auto [lock, registry] = ecs_registry.read();
+        //!   auto component = registry.get<Component>(entity); // for example
+        //! or:
+        //!   auto read = ecs_registry.read();
+        //!   auto component = read.registry.get<Component>(entity); // for example
         //! 
         //! @return A tuple including a scoped shared lock and a reference to the underlying registry
         inline Read read() const {

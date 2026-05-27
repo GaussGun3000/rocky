@@ -6,7 +6,7 @@
 #include "PointSystem.h"
 #include "TransformDetail.h"
 #include "ECSVisitors.h"
-#include "../PipelineState.h"
+#include "../ViewDependentState.h"
 
 using namespace ROCKY_NAMESPACE;
 using namespace ROCKY_NAMESPACE::detail;
@@ -54,7 +54,7 @@ namespace
             VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT, {});
 
         // We need VSG's view-dependent data:
-        PipelineUtils::addViewDependentState(shaderSet, VK_SHADER_STAGE_VERTEX_BIT);
+        addViewDependentStateToShaderSet(shaderSet, VK_SHADER_STAGE_VERTEX_BIT);
 
         // Note: 128 is the maximum size required by the Vulkan spec so don't increase it
         shaderSet->addPushConstantRange("pc", "", VK_SHADER_STAGE_VERTEX_BIT, 0, 128);
@@ -211,7 +211,7 @@ PointSystemNode::initialize(VSGContext vsgcontext)
         c.config->enableDescriptor("u_point");
 
         // always both
-        PipelineUtils::enableViewDependentState(c.config);
+        enableViewDependentStateUniforms(c.config);
 
         struct SetPipelineStates : public vsg::Visitor
         {

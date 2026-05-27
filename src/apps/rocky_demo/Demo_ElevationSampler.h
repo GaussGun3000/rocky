@@ -15,27 +15,33 @@ namespace
     {
     public:
         ElevationSamplerMouseHandler(Application& in_app) : app(in_app) {}
-        Callback<const GeoPoint&> onMouseMove;
+        Callback<const GeoPoint&, const View&> onMouseMove;
 
     protected:
         Application& app;
 
-        Result<GeoPoint> mapPoint(vsg::PointerEvent& e) const
+        struct PointAndView
+        {
+            GeoPoint point;
+            View view;
+        };
+
+        Result<PointAndView> mapPoint(vsg::PointerEvent& e) const
         {
             auto& window = app.display.find(e.window.ref_ptr());
             auto&& [point, view] = geoPointAtWindowCoords(window, e.x, e.y);
             if (point)
-                return point;
+                return PointAndView{ point.value(), view };
             else
                 return Failure{};
         }
 
         void apply(vsg::MoveEvent& e) override
         {
-            if (auto p = mapPoint(e))
-                onMouseMove.fire(p.value());
+            if (auto r = mapPoint(e))
+                onMouseMove.fire(r.value().point, r.value().view);
             else
-                onMouseMove.fire(GeoPoint());
+                onMouseMove.fire(GeoPoint(), View());
         }
     };
 }
@@ -49,6 +55,7 @@ auto Demo_ElevationSampler = [](Application& app)
     static ElevationSampler sampler;
     static Future<Result<ElevationSample>> sample;
     static GeoPoint mouse;
+    static ViewIDType viewID = 0;
 
     frame = app.viewer->getFrameStamp()->frameCount;
 
@@ -79,11 +86,14 @@ auto Demo_ElevationSampler = [](Application& app)
         // Configure our sampler.
         sampler.layer = app.mapNode->map->layer<ElevationLayer>();
 
+        // Optional cache to speed up localized queries:
+        sampler.cache = std::make_shared<LRUCache<TileKey, Result<GeoImage>>>(64); // tile cache
+
         // event handler to capture mouse movements:
         auto handler = ElevationSamplerMouseHandler::create(app);
         app.viewer->getEventHandlers().emplace_back(handler);
 
-        subs += handler->onMouseMove([&](const GeoPoint& p)
+        subs += handler->onMouseMove([&](const GeoPoint& p, const View& view)
             {
                 if (p.valid())
                 {
@@ -95,6 +105,8 @@ auto Demo_ElevationSampler = [](Application& app)
                         });
 
                     mouse = p.transform(SRS::WGS84);
+
+                    viewID = view.viewID;
 
                     sample = app.io().services().jobs.dispatch([&app, point(p)](Cancelable& c)
                         {
@@ -123,8 +135,10 @@ auto Demo_ElevationSampler = [](Application& app)
         ImGuiLTable::Text("WGS84:", "%.2f, %.2f, %.2f", i.x, i.y, i.z);
 
         // Various coordinate spaces:
-        auto world = i.transform(app.mapNode->srs());
-        auto camera = app.display.window().view().vsgView->camera;
+        auto& view = app.display.window().view(viewID);
+        auto mapNode = view.find<MapNode>();
+        auto world = i.transform(mapNode->srs());
+        auto camera = view.vsgView->camera;
         auto viewMatrix = camera->viewMatrix->transform();
         auto projMatrix = camera->projectionMatrix->transform();
         auto viewPos = viewMatrix * vsg::dvec4(world.x, world.y, world.z, 1.0);
@@ -159,6 +173,9 @@ auto Demo_ElevationSampler = [](Application& app)
         {
             ImGuiLTable::TextUnformatted("Elevation sampler:", "n/a - no elevation layer");
         }
+
+        ImGui::Separator();
+        ImGuiLTable::Text("View ID:", "%d", viewID);
     }
     else
     {
