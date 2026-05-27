@@ -22,6 +22,10 @@ auto Demo_Environment = [](Application& app)
     {
         ImGui::TextColored(ImVec4(1, 0, 0, 1), "%s", "Sky is not installed; use --sky");
 
+#if 0
+        // COMMENTED OUT.
+        // Can't do this until we rework the ROCKY_ATMOPHERE pragma into either a global uniform
+        // OR a pipeline recompile.
         if (ImGui::Button("Install sky"))
         {
             app.vsgcontext->onNextUpdate([&app, mainView](VSGContext vsgcontext)
@@ -42,6 +46,8 @@ auto Demo_Environment = [](Application& app)
         }
 
         app.vsgcontext->requestFrame();
+#endif
+
         return;
     }
 
