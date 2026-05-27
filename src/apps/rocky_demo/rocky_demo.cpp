@@ -38,6 +38,7 @@ using namespace ROCKY_NAMESPACE;
 #include "Demo_TrackHistory.h"
 #include "Demo_Decluttering.h"
 #include "Demo_GeoTransform.h"
+#include "Demo_SceneGraphInspector.h"
 #include "Demo_NodePager.h"
 #include "Demo_FeatureBuilder.h"
 #include "Demo_MVTFeatures.h"
@@ -131,6 +132,7 @@ std::vector<Demo> demos =
         Demo{ "Sky", Demo_Environment },
         Demo{ "Synchronization", Demo_Synchro }
     } },
+    Demo{ "Scene graph inspector", Demo_SceneGraphInspector },
     Demo{ "Stats", Demo_Stats },
     Demo{ "About", Demo_About }
 };
