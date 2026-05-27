@@ -138,3 +138,6 @@ namespace ROCKY_NAMESPACE
         }
     };
 }
+
+EVSG_type_name(rocky::PixelScaleTransform)
+EVSG_type_name(rocky::ScreenSpaceGroup)

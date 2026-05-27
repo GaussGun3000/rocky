@@ -48,3 +48,5 @@ namespace ROCKY_NAMESPACE
         vsg::ref_ptr<vsg::DescriptorBuffer> _skyUBO;
     };
 };
+
+EVSG_type_name(rocky::SkyNode)

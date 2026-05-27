@@ -144,3 +144,6 @@ namespace ROCKY_NAMESPACE
         void addOrUpdateTexture(const MeshTexture&, detail::MeshTextureDetail&, entt::registry&);
     };
 }
+
+EVSG_type_name(rocky::MeshGeometryNode)
+EVSG_type_name(rocky::MeshSystemNode)

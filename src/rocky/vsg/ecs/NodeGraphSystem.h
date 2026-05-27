@@ -53,3 +53,5 @@ namespace ROCKY_NAMESPACE
         void on_update_NodeGraph(entt::registry& r, entt::entity e);
     };
 }
+
+EVSG_type_name(rocky::NodeSystemNode)

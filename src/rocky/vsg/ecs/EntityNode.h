@@ -64,3 +64,5 @@ namespace ROCKY_NAMESPACE
         Registry registry;
     };
 }
+
+EVSG_type_name(rocky::EntityNode)

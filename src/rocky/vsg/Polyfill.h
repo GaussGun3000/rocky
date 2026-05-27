@@ -79,3 +79,9 @@ namespace ROCKY_NAMESPACE
         VkColorComponentFlags _colorWriteMask;
     };
 }
+
+EVSG_type_name(rocky::VulkanExtensions)
+EVSG_type_name(rocky::SetPolygonMode)
+EVSG_type_name(rocky::SetDepthWriteEnable)
+EVSG_type_name(rocky::SetCullMode)
+EVSG_type_name(rocky::SetColorWriteMask)

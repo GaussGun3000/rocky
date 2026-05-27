@@ -59,3 +59,4 @@ namespace ROCKY_NAMESPACE
     };
 }
 
+EVSG_type_name(rocky::SendEventsToImGui)

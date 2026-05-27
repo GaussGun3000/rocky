@@ -98,3 +98,5 @@ namespace ROCKY_NAMESPACE
     // temporary workaround for Dear ImGui's nonexistent sRGB awareness
     //extern void ImGuiStyle_sRGB_to_linear(ImGuiStyle& style);
 }
+
+EVSG_type_name(rocky::RenderImGui)

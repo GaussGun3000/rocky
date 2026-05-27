@@ -584,3 +584,6 @@ namespace ROCKY_NAMESPACE
         }
     }
 }
+
+EVSG_type_name(rocky::detail::LambdaOperation)
+EVSG_type_name(rocky::detail::SimpleCompiler)

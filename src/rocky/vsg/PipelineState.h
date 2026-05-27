@@ -201,3 +201,7 @@ namespace ROCKY_NAMESPACE
         mutable VkBufferCopy dirty_region = VkBufferCopy{ 0, 0, 0 };
     };
 }
+
+EVSG_type_name(rocky::RockyViewDependentState)
+EVSG_type_name(rocky::DescriptorBufferEx)
+EVSG_type_name(rocky::StreamingGPUBuffer)
