@@ -2,11 +2,13 @@ This project uses CMake to build.
 
 Do not attempt to figure out how to build this project on your own.  Use these instructions explicitly.
 
+The build directory contains scripts you can use to build this project.
+
 To configure this project you can run
 ```
 configure.bat
 ```
-This will create an out of source cmake build in a directory called "build".
+This will create an out of source cmake build in a directory called "x64-windows".
 
 To build the project run this command
 ```
