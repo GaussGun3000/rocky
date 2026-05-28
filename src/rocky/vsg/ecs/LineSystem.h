@@ -286,3 +286,6 @@ namespace ROCKY_NAMESPACE
         _indices->dirty();
     }
 }
+
+EVSG_type_name(rocky::LineGeometryNode)
+EVSG_type_name(rocky::LineSystemNode)

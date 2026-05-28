@@ -104,3 +104,5 @@ namespace ROCKY_NAMESPACE
         MapDescriptors _mapDescriptors;
     };
 }
+
+EVSG_type_name(rocky::MapNode)

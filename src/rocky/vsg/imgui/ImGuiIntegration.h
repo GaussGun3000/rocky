@@ -164,6 +164,11 @@ namespace ROCKY_NAMESPACE
     }
 }
 
+EVSG_type_name(rocky::SendEventsToImGuiContext)
+EVSG_type_name(rocky::ImGuiContextNode)
+EVSG_type_name(rocky::ImGuiRenderer)
+EVSG_type_name(rocky::detail::ImGuiDispatcher)
+
 
 namespace ImGuiEx
 {

@@ -130,3 +130,5 @@ namespace ROCKY_NAMESPACE
         return true;
     }
 }
+
+EVSG_type_name(rocky::SurfaceNode)

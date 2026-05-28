@@ -138,3 +138,6 @@ namespace ROCKY_NAMESPACE
         friend class TerrainState;
     };
 }
+
+EVSG_type_name(rocky::TerrainProfileNode)
+EVSG_type_name(rocky::TerrainNode)

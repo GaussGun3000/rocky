@@ -38,4 +38,6 @@ namespace ROCKY_NAMESPACE
         std::unordered_set<entt::entity> _focusedEntities;
     };
 }
+
+EVSG_type_name(rocky::WidgetSystemNode)
 #endif // defined(ROCKY_HAS_IMGUI)

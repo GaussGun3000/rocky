@@ -93,3 +93,6 @@ namespace ROCKY_NAMESPACE
         }
     };
 }
+
+EVSG_type_name(rocky::ECSPolytopeIntersector)
+EVSG_type_name(rocky::ECSLineSegmentIntersector)

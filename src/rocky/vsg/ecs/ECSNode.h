@@ -337,3 +337,6 @@ namespace ROCKY_NAMESPACE
         };
     }
 }
+
+EVSG_type_name(rocky::ECSNode)
+EVSG_type_name(rocky::detail::SimpleSystemNodeBase)

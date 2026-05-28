@@ -554,3 +554,5 @@ namespace ROCKY_NAMESPACE
         void updateProjection(vsg::Camera*);
     };
 }
+
+EVSG_type_name(rocky::MapManipulator)

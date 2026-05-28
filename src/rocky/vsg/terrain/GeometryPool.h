@@ -76,6 +76,8 @@ namespace ROCKY_NAMESPACE
 }
 
 
+EVSG_type_name(rocky::SharedGeometry)
+
 namespace ROCKY_NAMESPACE
 {
     class Profile;

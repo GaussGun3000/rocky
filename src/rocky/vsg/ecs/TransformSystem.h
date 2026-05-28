@@ -39,3 +39,5 @@ namespace ROCKY_NAMESPACE
         mutable ViewLocal<ViewDetail> views;
     };
 }
+
+EVSG_type_name(rocky::TransformSystem)

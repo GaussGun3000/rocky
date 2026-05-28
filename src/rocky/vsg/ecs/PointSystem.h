@@ -189,3 +189,6 @@ namespace ROCKY_NAMESPACE
         _widths->dirty();
     }
 }
+
+EVSG_type_name(rocky::PointGeometryNode)
+EVSG_type_name(rocky::PointSystemNode)

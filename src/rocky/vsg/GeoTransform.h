@@ -36,3 +36,5 @@ namespace ROCKY_NAMESPACE
     };
 
 } // namespace
+
+EVSG_type_name(rocky::GeoTransform)

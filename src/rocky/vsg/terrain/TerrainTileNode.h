@@ -79,3 +79,5 @@ namespace ROCKY_NAMESPACE
         friend class TerrainTilePager;
     };
 }
+
+EVSG_type_name(rocky::TerrainTileNode)
