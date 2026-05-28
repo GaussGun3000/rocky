@@ -17,119 +17,12 @@ namespace
         return vsg::dvec3(v.x, v.y, v.z);
     }
 
-    inline vsg::dvec3 transform3x3(const vsg::dmat4& m, const vsg::dvec3& v)
-    {
-        return vsg::dvec3(
-            m[0][0] * v.x + m[1][0] * v.y + m[2][0] * v.z,
-            m[0][1] * v.x + m[1][1] * v.y + m[2][1] * v.z,
-            m[0][2] * v.x + m[1][2] * v.y + m[2][2] * v.z);
-    }
-
     inline vsg::dvec3 transform3x3Transpose(const vsg::dmat4& m, const vsg::dvec3& v)
     {
         return vsg::dvec3(
             m[0][0] * v.x + m[0][1] * v.y + m[0][2] * v.z,
             m[1][0] * v.x + m[1][1] * v.y + m[1][2] * v.z,
             m[2][0] * v.x + m[2][1] * v.y + m[2][2] * v.z);
-    }
-
-    inline vsg::dmat4 linearPart(const vsg::dmat4& m)
-    {
-        return vsg::dmat4(
-            m[0][0], m[0][1], m[0][2], 0.0,
-            m[1][0], m[1][1], m[1][2], 0.0,
-            m[2][0], m[2][1], m[2][2], 0.0,
-            0.0, 0.0, 0.0, 1.0);
-    }
-
-    // the camera position in model space (or tile tangent space)
-    [[maybe_unused]] vsg::dvec3 getCameraMs(const vsg::dmat4& modelview)
-    {
-        return -transform3x3Transpose(modelview, xyz(modelview[3]));
-    }
-
-    // get a matrix that will rotate a view-space vector into world-space
-    [[maybe_unused]] vsg::dmat4 getRotateVsToWs(const vsg::dmat4& modelMatrix, const vsg::dmat4& modelview)
-    {
-        return linearPart(modelMatrix) * vsg::transpose(linearPart(modelview));
-    }
-
-    // get a matrix that will rotate a view-space vector into world-space
-    [[maybe_unused]] vsg::dmat4 getRotateVsToWsFromInverseViewMatrix(const vsg::dmat4& inverseViewMatrix, const vsg::dmat4& modelview)
-    {
-        return linearPart(inverseViewMatrix * modelview) * vsg::transpose(linearPart(modelview));
-    }
-
-    // get the parametric distance along a ray at which it intersects an ellipsoid
-    // (t, such that isect = origin + t * dir)
-    [[maybe_unused]] double rayEllipsoidIntersect(const vsg::dvec3& origin, const vsg::dvec3& dir, const vsg::dvec2& axes)
-    {
-        vsg::dvec3 invAxes2(
-            1.0 / (axes.x * axes.x),
-            1.0 / (axes.x * axes.x),
-            1.0 / (axes.y * axes.y));
-
-        double a = vsg::dot(vsg::dvec3(dir.x * dir.x, dir.y * dir.y, dir.z * dir.z), invAxes2);
-        double b = 2.0 * vsg::dot(vsg::dvec3(origin.x * dir.x, origin.y * dir.y, origin.z * dir.z), invAxes2);
-        double c = vsg::dot(vsg::dvec3(origin.x * origin.x, origin.y * origin.y, origin.z * origin.z), invAxes2) - 1.0;
-        double discriminant = b * b - 4.0 * a * c;
-
-        if (discriminant <= 0.0 || a <= 0.0)
-            return -1.0;
-
-        double root = std::sqrt(discriminant);
-        double t = (-b - root) / (2.0 * a);
-        if (t <= 0.0)
-            t = (-b + root) / (2.0 * a);
-
-        return t;
-    }
-
-    // unit normal vector to the ellipsoid at a point
-    [[maybe_unused]] vsg::dvec3 ellipsoidNormal(const vsg::dvec3& point, const vsg::dvec2& axes)
-    {
-        return vsg::normalize(vsg::dvec3(
-            point.x / (axes.x * axes.x),
-            point.y / (axes.x * axes.x),
-            point.z / (axes.y * axes.y)));
-    }
-
-    [[maybe_unused]] vsg::dvec3 projectToSphericalGnomonic(const vsg::dvec3& position_vs, double R, const vsg::dmat4& viewMatrix)
-    {
-        vsg::dvec3 sphereCenter_vs = xyz(viewMatrix * vsg::dvec4(0.0, 0.0, 0.0, 1.0));
-        vsg::dvec3 look_vs(0.0, 0.0, -1.0);
-        vsg::dvec3 planeNormal_vs(0.0, 0.0, 1.0);
-        vsg::dvec3 radius_vs = position_vs - sphereCenter_vs;
-        double distance = vsg::length(radius_vs);
-
-        if (distance <= 1e-6)
-            return position_vs;
-
-        vsg::dvec3 surface_position_vs = sphereCenter_vs + radius_vs * (R / distance);
-        double height = distance - R;
-
-        double b = vsg::dot(sphereCenter_vs, look_vs);
-        double discriminant = b * b - (vsg::dot(sphereCenter_vs, sphereCenter_vs) - R * R);
-
-        if (discriminant <= 0.0)
-            return surface_position_vs + height * planeNormal_vs;
-
-        double root = std::sqrt(discriminant);
-        double t = b - root;
-        if (t <= 0.0)
-            t = b + root;
-        if (t <= 0.0)
-            return surface_position_vs + height * planeNormal_vs;
-
-        vsg::dvec3 planeOrigin_vs = look_vs * t;
-        vsg::dvec3 dir_vs = surface_position_vs - sphereCenter_vs;
-        double denom = vsg::dot(dir_vs, planeNormal_vs);
-
-        if (denom <= 1e-6)
-            return surface_position_vs + height * planeNormal_vs;
-
-        double scale = vsg::dot(planeOrigin_vs - sphereCenter_vs, planeNormal_vs) / denom;
-        return sphereCenter_vs + dir_vs * scale + height * planeNormal_vs;
     }
 
     [[maybe_unused]] vsg::dvec3 projectVertexToStereographic(
@@ -190,7 +83,7 @@ namespace
         return projected_anchor_vs + offset_vs;
     }
 
-    [[maybe_unused]] vsg::dvec4 applyProjection(
+    inline vsg::dvec4 applyProjection(
         const vsg::dvec4& position_vs,
         const vsg::dvec2& ellipsoid,
         const vsg::dmat4& viewMatrix,
