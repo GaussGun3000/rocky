@@ -275,14 +275,29 @@ TransformDetail::update(vsg::RecordTraversal& record, const PixelScale* pixelSca
                     view.model = vsg::translate(worldpos.x, worldpos.y, worldpos.z);
                 }
 
+                bool localMatrixHasScale = false;
+                vsg::dvec3 localMatrixScale(1.0, 1.0, 1.0);
+
                 if (ROCKY_MAT4_IS_NOT_IDENTITY(sync.localMatrix))
                 {
+                    localMatrixScale.x = glm::length(glm::dvec3(sync.localMatrix[0]));
+                    localMatrixScale.y = glm::length(glm::dvec3(sync.localMatrix[1]));
+                    localMatrixScale.z = glm::length(glm::dvec3(sync.localMatrix[2]));
+                    localMatrixHasScale =
+                        localMatrixScale.x > 0.0 &&
+                        localMatrixScale.y > 0.0 &&
+                        localMatrixScale.z > 0.0 &&
+                        (localMatrixScale.x != 1.0 || localMatrixScale.y != 1.0 || localMatrixScale.z != 1.0);
+
                     glm::dmat4 temp;
                     ROCKY_FAST_MAT4_MULT(temp, view.model, sync.localMatrix);
                     view.model = to_vsg(temp);
                 }
 
                 view.baseModel = view.model;
+                view.pixelScaleBaseModel = localMatrixHasScale ?
+                    view.baseModel * vsg::scale(1.0 / localMatrixScale.x, 1.0 / localMatrixScale.y, 1.0 / localMatrixScale.z) :
+                    view.baseModel;
             }
         }
 
@@ -308,9 +323,12 @@ TransformDetail::update(vsg::RecordTraversal& record, const PixelScale* pixelSca
 
     if (pixelScale && pixelScale->enabled)
     {
-        // Start from the unscaled base model so we don't compound scale adjustments.
-        if (!transform_changed) // dont' do it twice
-            view.model = view.baseModel;
+        // Start from the local-scale-neutral base model so we don't compound scale adjustments
+        // or apply Transform::localMatrix scale along with PixelScale.
+        view.model = view.pixelScaleBaseModel;
+        model_scale = vsg::length(vsg::dvec3(view.model[0][0], view.model[0][1], view.model[0][2]));
+        scaled_radius = sync.radius;
+        culling_radius = scaled_radius;
 
         double ppu = 0.0; // pixels per world unit at the entity's location
 

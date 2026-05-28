@@ -20,6 +20,7 @@ namespace ROCKY_NAMESPACE
         int revision = -1;    // revision of this data, for syncing
         vsg::dmat4 model;     // model matrix (possibly adjusted by dynamic scale)
         vsg::dmat4 baseModel; // model matrix before dynamic scale adjustment
+        vsg::dmat4 pixelScaleBaseModel; // model matrix with local scale removed
         vsg::dmat4 proj;      // projection matrix
         vsg::dmat4 modelview; // modelview matrix
         vsg::dmat4 mvp;       // modelview-projection matrix
