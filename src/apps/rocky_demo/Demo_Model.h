@@ -23,7 +23,7 @@ auto Demo_Model = [](Application& app)
 
         // The model component.
         auto& model = reg.emplace<Model>(entity);
-        model.uri = URI("xhttps://readymap.org/readymap/filemanager/download/public/models/C130_WFF_AIR_0824.glb");
+        model.uri = URI("https://readymap.org/readymap/filemanager/download/public/models/C130_WFF_AIR_0824.glb");
 
         // A transform component to place and move it on the map
         auto& transform = reg.emplace<Transform>(entity);
