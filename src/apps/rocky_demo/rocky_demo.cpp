@@ -127,12 +127,12 @@ std::vector<Demo> demos =
         Demo{ "Geocoding", Demo_Geocoder },
         Demo{ "Ordered rendering", Demo_OrderedRendering },
         Demo{ "Render to texture", Demo_RTT },
+        Demo{ "Scene graph inspector", Demo_SceneGraphInspector },
         Demo{ "Screenshot", Demo_Screenshot },
         Demo{ "Serialization", Demo_Serialization },
         Demo{ "Sky", Demo_Environment },
         Demo{ "Synchronization", Demo_Synchro }
     } },
-    Demo{ "Scene graph inspector", Demo_SceneGraphInspector },
     Demo{ "Stats", Demo_Stats },
     Demo{ "About", Demo_About }
 };
