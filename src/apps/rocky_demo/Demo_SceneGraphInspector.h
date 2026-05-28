@@ -17,8 +17,11 @@
 #include <vsg/nodes/StateGroup.h>
 #include <vsg/nodes/Switch.h>
 #include <vsg/state/BindDescriptorSet.h>
+#include <vsg/state/DescriptorBuffer.h>
 #include <vsg/state/DescriptorImage.h>
 #include <vsg/state/DescriptorSet.h>
+#include <vsg/state/DescriptorSetLayout.h>
+#include <vsg/state/GraphicsPipeline.h>
 #include <algorithm>
 #include <cstdio>
 #include <cstdint>
@@ -283,6 +286,83 @@ namespace
         }
     }
 
+    std::string scene_graph_inspector_shader_stage_flags(VkShaderStageFlags stageFlags)
+    {
+        if (stageFlags == 0)
+            return "None";
+
+        std::string result;
+        auto append = [&result](VkShaderStageFlags flags, VkShaderStageFlagBits bit, const char* label)
+        {
+            if ((flags & bit) == 0)
+                return;
+
+            if (!result.empty())
+                result += ", ";
+            result += label;
+        };
+
+        append(stageFlags, VK_SHADER_STAGE_VERTEX_BIT, "Vertex");
+        append(stageFlags, VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT, "Tess control");
+        append(stageFlags, VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT, "Tess eval");
+        append(stageFlags, VK_SHADER_STAGE_GEOMETRY_BIT, "Geometry");
+        append(stageFlags, VK_SHADER_STAGE_FRAGMENT_BIT, "Fragment");
+        append(stageFlags, VK_SHADER_STAGE_COMPUTE_BIT, "Compute");
+
+        const auto known =
+            VK_SHADER_STAGE_VERTEX_BIT |
+            VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT |
+            VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT |
+            VK_SHADER_STAGE_GEOMETRY_BIT |
+            VK_SHADER_STAGE_FRAGMENT_BIT |
+            VK_SHADER_STAGE_COMPUTE_BIT;
+
+        if (stageFlags & ~known)
+        {
+            if (!result.empty())
+                result += ", ";
+            result += "Other";
+        }
+
+        return result;
+    }
+
+    std::string scene_graph_inspector_descriptor_binding_flags(VkDescriptorBindingFlags bindingFlags)
+    {
+        if (bindingFlags == 0)
+            return "None";
+
+        std::string result;
+        auto append = [&result](VkDescriptorBindingFlags flags, VkDescriptorBindingFlagBits bit, const char* label)
+        {
+            if ((flags & bit) == 0)
+                return;
+
+            if (!result.empty())
+                result += ", ";
+            result += label;
+        };
+
+        append(bindingFlags, VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT, "Update after bind");
+        append(bindingFlags, VK_DESCRIPTOR_BINDING_UPDATE_UNUSED_WHILE_PENDING_BIT, "Update unused while pending");
+        append(bindingFlags, VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT, "Partially bound");
+        append(bindingFlags, VK_DESCRIPTOR_BINDING_VARIABLE_DESCRIPTOR_COUNT_BIT, "Variable descriptor count");
+
+        return result;
+    }
+
+    const char* scene_graph_inspector_data_variance(vsg::DataVariance dataVariance)
+    {
+        switch (dataVariance)
+        {
+        case vsg::STATIC_DATA: return "Static";
+        case vsg::STATIC_DATA_UNREF_AFTER_TRANSFER: return "Static, unref after transfer";
+        case vsg::DYNAMIC_DATA: return "Dynamic";
+        case vsg::DYNAMIC_DATA_TRANSFER_AFTER_RECORD: return "Dynamic, transfer after record";
+        default: return "Unknown";
+        }
+    }
+
     const char* scene_graph_inspector_vk_format(VkFormat format)
     {
         switch (format)
@@ -363,6 +443,294 @@ namespace
         }
     }
 
+    void scene_graph_inspector_render_data_properties(vsg::Data* data)
+    {
+        if (!data)
+        {
+            ImGuiLTable::TextUnformatted("Data:", "<null>");
+            return;
+        }
+
+        ImGuiLTable::TextUnformatted("Data type:", data->className());
+        ImGuiLTable::Text("Data address:", "%p", data);
+        ImGuiLTable::Text("Data size:", "%zu bytes", data->dataSize());
+        ImGuiLTable::Text("Values:", "%zu", data->valueCount());
+        ImGuiLTable::Text("Value size:", "%zu bytes", data->valueSize());
+        ImGuiLTable::Text("Stride:", "%u bytes", data->stride());
+        ImGuiLTable::Text("Dimensions:", "%u x %u x %u", data->width(), data->height(), data->depth());
+        ImGuiLTable::Text("Format:", "%s (%d)",
+            scene_graph_inspector_vk_format(data->properties.format),
+            static_cast<int>(data->properties.format));
+        ImGuiLTable::TextUnformatted("Variance:", scene_graph_inspector_data_variance(data->properties.dataVariance));
+    }
+
+    void scene_graph_inspector_render_buffer_info(vsg::BufferInfo* bufferInfo, std::size_t index)
+    {
+        ImGui::PushID(static_cast<int>(index));
+
+        std::string label = "Buffer " + std::to_string(index);
+        if (!scene_graph_inspector_section(label.c_str()))
+        {
+            ImGui::PopID();
+            return;
+        }
+
+        auto buffer = bufferInfo ? bufferInfo->buffer : nullptr;
+        auto data = bufferInfo ? bufferInfo->data : nullptr;
+        auto parent = bufferInfo ? bufferInfo->parent : nullptr;
+
+        if (ImGuiLTable::Begin(label.c_str()))
+        {
+            ImGuiLTable::Text("BufferInfo:", "%p", bufferInfo);
+            ImGuiLTable::Text("Buffer:", "%p", buffer.get());
+            ImGuiLTable::Text("Parent:", "%p", parent.get());
+            ImGuiLTable::Text("Offset:", "%llu bytes", bufferInfo ? static_cast<unsigned long long>(bufferInfo->offset) : 0ull);
+            ImGuiLTable::Text("Range:", "%llu bytes", bufferInfo ? static_cast<unsigned long long>(bufferInfo->range) : 0ull);
+
+            if (buffer)
+            {
+                ImGuiLTable::Text("Buffer size:", "%llu bytes", static_cast<unsigned long long>(buffer->size));
+                ImGuiLTable::Text("Usage flags:", "0x%08x", static_cast<unsigned int>(buffer->usage));
+                ImGuiLTable::Text("Sharing mode:", "%d", static_cast<int>(buffer->sharingMode));
+                ImGuiLTable::Text("Device entries:", "%u", buffer->sizeVulkanData());
+            }
+
+            scene_graph_inspector_render_data_properties(data.get());
+            ImGuiLTable::End();
+        }
+
+        ImGui::PopID();
+    }
+
+    void scene_graph_inspector_render_descriptor_set_layout_binding(
+        const VkDescriptorSetLayoutBinding& binding,
+        VkDescriptorBindingFlags bindingFlags,
+        std::size_t index)
+    {
+        ImGui::PushID(static_cast<int>(index));
+
+        std::string label = "Binding " + std::to_string(binding.binding);
+        if (!scene_graph_inspector_section(label.c_str()))
+        {
+            ImGui::PopID();
+            return;
+        }
+
+        auto stageFlags = scene_graph_inspector_shader_stage_flags(binding.stageFlags);
+        auto descriptorBindingFlags = scene_graph_inspector_descriptor_binding_flags(bindingFlags);
+
+        if (ImGuiLTable::Begin(label.c_str()))
+        {
+            ImGuiLTable::Text("Binding:", "%u", binding.binding);
+            ImGuiLTable::TextUnformatted("Descriptor type:", scene_graph_inspector_descriptor_type(binding.descriptorType));
+            ImGuiLTable::Text("Descriptor count:", "%u", binding.descriptorCount);
+            ImGuiLTable::Text("Stage flags:", "0x%08x", static_cast<unsigned int>(binding.stageFlags));
+            ImGuiLTable::TextWrapped("Stages:", "%s", stageFlags.c_str());
+            ImGuiLTable::Text("Immutable samplers:", "%p", binding.pImmutableSamplers);
+            ImGuiLTable::Text("Binding flags:", "0x%08x", static_cast<unsigned int>(bindingFlags));
+            ImGuiLTable::TextWrapped("Binding flag names:", "%s", descriptorBindingFlags.c_str());
+            ImGuiLTable::End();
+        }
+
+        ImGui::PopID();
+    }
+
+    void scene_graph_inspector_render_descriptor_set_layout(vsg::DescriptorSetLayout* layout)
+    {
+        if (!layout)
+            return;
+
+        if (!scene_graph_inspector_section("Descriptor Set Layout"))
+            return;
+
+        if (ImGuiLTable::Begin("DescriptorSetLayout"))
+        {
+            ImGuiLTable::Text("Create flags:", "0x%08x", static_cast<unsigned int>(layout->createFlags));
+            ImGuiLTable::Text("Bindings:", "%zu", layout->bindings.size());
+            ImGuiLTable::Text("Binding flags:", "%zu", layout->bindingFlags.size());
+            ImGuiLTable::End();
+        }
+
+        for (std::size_t i = 0; i < layout->bindings.size(); ++i)
+        {
+            auto bindingFlags = i < layout->bindingFlags.size() ? layout->bindingFlags[i] : 0;
+            scene_graph_inspector_render_descriptor_set_layout_binding(layout->bindings[i], bindingFlags, i);
+        }
+    }
+
+    void scene_graph_inspector_render_push_constant_range(const VkPushConstantRange& range, std::size_t index)
+    {
+        ImGui::PushID(static_cast<int>(index));
+
+        std::string label = "Push constant " + std::to_string(index);
+        if (!scene_graph_inspector_section(label.c_str()))
+        {
+            ImGui::PopID();
+            return;
+        }
+
+        auto stageFlags = scene_graph_inspector_shader_stage_flags(range.stageFlags);
+
+        if (ImGuiLTable::Begin(label.c_str()))
+        {
+            ImGuiLTable::Text("Stage flags:", "0x%08x", static_cast<unsigned int>(range.stageFlags));
+            ImGuiLTable::TextWrapped("Stages:", "%s", stageFlags.c_str());
+            ImGuiLTable::Text("Offset:", "%u bytes", range.offset);
+            ImGuiLTable::Text("Size:", "%u bytes", range.size);
+            ImGuiLTable::End();
+        }
+
+        ImGui::PopID();
+    }
+
+    void scene_graph_inspector_render_pipeline_layout(vsg::PipelineLayout* layout)
+    {
+        if (!layout)
+        {
+            ImGui::TextUnformatted("No pipeline layout.");
+            return;
+        }
+
+        if (!scene_graph_inspector_section("Pipeline Layout"))
+            return;
+
+        if (ImGuiLTable::Begin("PipelineLayout"))
+        {
+            ImGuiLTable::Text("Layout:", "%p", layout);
+            ImGuiLTable::Text("Flags:", "0x%08x", static_cast<unsigned int>(layout->flags));
+            ImGuiLTable::Text("Set layouts:", "%zu", layout->setLayouts.size());
+            ImGuiLTable::Text("Push constants:", "%zu", layout->pushConstantRanges.size());
+            ImGuiLTable::End();
+        }
+
+        for (std::size_t i = 0; i < layout->setLayouts.size(); ++i)
+        {
+            ImGui::PushID(static_cast<int>(i));
+            std::string label = "Set layout " + std::to_string(i);
+            if (scene_graph_inspector_section(label.c_str()))
+            {
+                if (ImGuiLTable::Begin(label.c_str()))
+                {
+                    auto setLayout = layout->setLayouts[i];
+                    ImGuiLTable::Text("DescriptorSetLayout:", "%p", setLayout.get());
+                    ImGuiLTable::Text("Bindings:", "%zu", setLayout ? setLayout->bindings.size() : 0);
+                    ImGuiLTable::End();
+                }
+            }
+            ImGui::PopID();
+        }
+
+        for (std::size_t i = 0; i < layout->pushConstantRanges.size(); ++i)
+        {
+            scene_graph_inspector_render_push_constant_range(layout->pushConstantRanges[i], i);
+        }
+    }
+
+    void scene_graph_inspector_render_shader_stage(vsg::ShaderStage* stage, std::size_t index)
+    {
+        ImGui::PushID(static_cast<int>(index));
+
+        std::string label = "Shader stage " + std::to_string(index);
+        if (!scene_graph_inspector_section(label.c_str()))
+        {
+            ImGui::PopID();
+            return;
+        }
+
+        auto stageFlags = stage ? scene_graph_inspector_shader_stage_flags(stage->stage) : std::string("None");
+
+        if (ImGuiLTable::Begin(label.c_str()))
+        {
+            ImGuiLTable::Text("ShaderStage:", "%p", stage);
+            if (stage)
+            {
+                ImGuiLTable::TextUnformatted("Stage:", stageFlags.c_str());
+                ImGuiLTable::Text("Stage flags:", "0x%08x", static_cast<unsigned int>(stage->stage));
+                ImGuiLTable::Text("Create flags:", "0x%08x", static_cast<unsigned int>(stage->flags));
+                ImGuiLTable::Text("Mask:", "0x%llx", static_cast<unsigned long long>(stage->mask));
+                ImGuiLTable::TextUnformatted("Entry point:", stage->entryPointName.c_str());
+                ImGuiLTable::Text("Module:", "%p", stage->module.get());
+                ImGuiLTable::Text("Specialization constants:", "%zu", stage->specializationConstants.size());
+            }
+            ImGuiLTable::End();
+        }
+
+        ImGui::PopID();
+    }
+
+    void scene_graph_inspector_render_graphics_pipeline_state(vsg::GraphicsPipelineState* state, std::size_t index)
+    {
+        ImGui::PushID(static_cast<int>(index));
+
+        std::string label = "Pipeline state " + std::to_string(index);
+        if (!scene_graph_inspector_section(label.c_str()))
+        {
+            ImGui::PopID();
+            return;
+        }
+
+        if (ImGuiLTable::Begin(label.c_str()))
+        {
+            ImGuiLTable::Text("State:", "%p", state);
+            ImGuiLTable::TextUnformatted("Type:", state ? state->className() : "<null>");
+            ImGuiLTable::Text("Mask:", "0x%llx", state ? static_cast<unsigned long long>(state->mask) : 0ull);
+            ImGuiLTable::End();
+        }
+
+        ImGui::PopID();
+    }
+
+    void scene_graph_inspector_render_graphics_pipeline(vsg::GraphicsPipeline* pipeline)
+    {
+        if (!pipeline)
+        {
+            ImGui::TextUnformatted("No graphics pipeline.");
+            return;
+        }
+
+        if (!scene_graph_inspector_section("Graphics Pipeline"))
+            return;
+
+        if (ImGuiLTable::Begin("GraphicsPipeline"))
+        {
+            ImGuiLTable::Text("Pipeline:", "%p", pipeline);
+            ImGuiLTable::Text("Subpass:", "%u", pipeline->subpass);
+            ImGuiLTable::Text("Layout:", "%p", pipeline->layout.get());
+            ImGuiLTable::Text("Shader stages:", "%zu", pipeline->stages.size());
+            ImGuiLTable::Text("Pipeline states:", "%zu", pipeline->pipelineStates.size());
+            ImGuiLTable::End();
+        }
+
+        scene_graph_inspector_render_pipeline_layout(pipeline->layout.get());
+
+        for (std::size_t i = 0; i < pipeline->stages.size(); ++i)
+        {
+            scene_graph_inspector_render_shader_stage(pipeline->stages[i].get(), i);
+        }
+
+        for (std::size_t i = 0; i < pipeline->pipelineStates.size(); ++i)
+        {
+            scene_graph_inspector_render_graphics_pipeline_state(pipeline->pipelineStates[i].get(), i);
+        }
+    }
+
+    void scene_graph_inspector_render_bind_graphics_pipeline(vsg::BindGraphicsPipeline* bind)
+    {
+        if (!bind)
+            return;
+
+        if (!scene_graph_inspector_section("Bind Graphics Pipeline"))
+            return;
+
+        if (ImGuiLTable::Begin("BindGraphicsPipeline"))
+        {
+            ImGuiLTable::Text("Pipeline:", "%p", bind->pipeline.get());
+            ImGuiLTable::End();
+        }
+
+        scene_graph_inspector_render_graphics_pipeline(bind->pipeline.get());
+    }
+
     void scene_graph_inspector_render_image_info(vsg::ImageInfo* imageInfo, std::size_t index, VSGContext vsgcontext)
     {
         ImGui::PushID(static_cast<int>(index));
@@ -420,6 +788,29 @@ namespace
         }
 
         ImGui::PopID();
+    }
+
+    void scene_graph_inspector_render_descriptor_buffer(vsg::DescriptorBuffer* descriptor)
+    {
+        if (!descriptor)
+            return;
+
+        if (!scene_graph_inspector_section("Descriptor Buffer"))
+            return;
+
+        if (ImGuiLTable::Begin("DescriptorBuffer"))
+        {
+            ImGuiLTable::Text("Binding:", "%u", descriptor->dstBinding);
+            ImGuiLTable::Text("Array element:", "%u", descriptor->dstArrayElement);
+            ImGuiLTable::TextUnformatted("Descriptor type:", scene_graph_inspector_descriptor_type(descriptor->descriptorType));
+            ImGuiLTable::Text("Buffers:", "%zu", descriptor->bufferInfoList.size());
+            ImGuiLTable::End();
+        }
+
+        for (std::size_t i = 0; i < descriptor->bufferInfoList.size(); ++i)
+        {
+            scene_graph_inspector_render_buffer_info(descriptor->bufferInfoList[i].get(), i);
+        }
     }
 
     void scene_graph_inspector_render_descriptor_image(vsg::DescriptorImage* descriptor, VSGContext vsgcontext)
@@ -509,6 +900,15 @@ namespace
 
         if (auto descriptor = object->cast<vsg::DescriptorImage>())
             scene_graph_inspector_render_descriptor_image(descriptor, vsgcontext);
+
+        if (auto descriptor = object->cast<vsg::DescriptorBuffer>())
+            scene_graph_inspector_render_descriptor_buffer(descriptor);
+
+        if (auto layout = object->cast<vsg::DescriptorSetLayout>())
+            scene_graph_inspector_render_descriptor_set_layout(layout);
+
+        if (auto bind = object->cast<vsg::BindGraphicsPipeline>())
+            scene_graph_inspector_render_bind_graphics_pipeline(bind);
 
         auto node = object->cast<vsg::Node>();
         if (!node)
@@ -648,12 +1048,22 @@ namespace
             render(bind);
         }
 
+        void apply(vsg::BindGraphicsPipeline& bind) override
+        {
+            render(bind);
+        }
+
         void apply(vsg::DescriptorSet& descriptorSet) override
         {
             render(descriptorSet);
         }
 
         void apply(vsg::DescriptorImage& descriptor) override
+        {
+            render(descriptor);
+        }
+
+        void apply(vsg::DescriptorBuffer& descriptor) override
         {
             render(descriptor);
         }
