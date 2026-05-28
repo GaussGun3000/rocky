@@ -780,7 +780,7 @@ namespace
         {
             ImGui::Image(
                 scene_graph_inspector_texture_handle(preview->holder->descriptorSet, preview->deviceID),
-                size);
+                size, ImVec2(0,1), ImVec2(1,0));
         }
         else
         {
