@@ -75,10 +75,9 @@ namespace
                 else red = 0.5f;
 
                 ImGui::SetCurrentContext(i.context);
-                ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(1, 1));
-                ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 7.0f);
-                ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(red, green, blue, 0.65f));
-                ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(1, 1, 1, 1.0f));
+                ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(2, 1));
+                ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.01f, 0.01f, 0.01f, 0.9f));
+                ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0, 1, 0, 1.0f));
 
                 ImGui::SetNextWindowPos(
                     ImVec2{ i.position.x - image.size().x/2, i.position.y - image.size().y / 2 },
@@ -125,7 +124,7 @@ namespace
                 ImGui::End();
 
                 ImGui::PopStyleColor(2);
-                ImGui::PopStyleVar(2);
+                ImGui::PopStyleVar(1);
             };
 
         auto ll_to_ecef = SRS::WGS84.to(SRS::ECEF);
