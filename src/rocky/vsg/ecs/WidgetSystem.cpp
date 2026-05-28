@@ -14,6 +14,7 @@
 #include <rocky/Rendering.h>
 #include <rocky/ecs/Widget.h>
 #include <rocky/ecs/Visibility.h>
+#include <rocky/vsg/ViewDependentState.h>
 #include <imgui.h>
 
 using namespace ROCKY_NAMESPACE;
@@ -21,12 +22,12 @@ using namespace ROCKY_NAMESPACE;
 namespace
 {
     // Internal component for rendering a widget instance
-    struct WidgetRenderable
+    struct WidgetDetail
     {
         const std::string uid = std::to_string((std::uintptr_t)this);
         ViewLocal<ImVec2> screen;
         ImVec2 windowSize = { -1, -1 };
-        WidgetRenderable() {
+        WidgetDetail() {
             screen.fill({ -1.0, -1.0 });
         }
     };
@@ -36,12 +37,12 @@ namespace
         (void)r.get_or_emplace<ActiveState>(e);
         (void)r.get_or_emplace<Visibility>(e);
 
-        r.emplace<WidgetRenderable>(e);
+        r.emplace<WidgetDetail>(e);
     }
 
     void on_destroy_Widget(entt::registry& r, entt::entity e)
     {
-        r.remove<WidgetRenderable>(e);
+        r.remove<WidgetDetail>(e);
     }
 }
 
@@ -82,7 +83,7 @@ WidgetSystemNode::initialize(VSGContext context)
             _focusedEntities.clear();
 
             // widgets with a Transform:
-            auto iter = reg.view<Widget, WidgetRenderable, TransformDetail, Visibility, ActiveState>();
+            auto iter = reg.view<Widget, WidgetDetail, TransformDetail, Visibility, ActiveState>();
             for (auto&& [entity, widget, renderable, xdetail, visibility, active] : iter.each())
             {
                 if (widget.render != nullptr && visible(visibility, rs) && xdetail.passingCull(rs))
@@ -112,7 +113,7 @@ WidgetSystemNode::initialize(VSGContext context)
             }
 
             // widgets WITHOUT a Transform:
-            auto iter2 = reg.view<Widget, WidgetRenderable, Visibility, ActiveState>(entt::exclude<TransformDetail>);
+            auto iter2 = reg.view<Widget, WidgetDetail, Visibility, ActiveState>(entt::exclude<TransformDetail>);
             for (auto&& [entity, widget, renderable, visibility, active] : iter2.each())
             {
                 if (widget.render != nullptr && visible(visibility, rs))
@@ -151,12 +152,13 @@ WidgetSystemNode::update(VSGContext context)
     auto [lock, registry] = _registry.read();
 
     // calculate the screen position of the widget in each view
-    registry.view<WidgetRenderable, TransformDetail>().each([&](auto& renderable, auto& xdetail)
+    registry.view<WidgetDetail, TransformDetail>().each([&](auto& renderable, auto& xdetail)
         {
             for(auto& viewID : context->activeViewIDs)
             {
                 auto& view = xdetail.views[viewID];
-                auto clip = view.mvp[3] / view.mvp[3][3];
+                auto clip = view.proj * view.position;
+                clip /= clip.w;
                 renderable.screen[viewID].x = (clip.x + 1.0) * 0.5 * (double)view.viewport[2] + (double)view.viewport[0];
                 renderable.screen[viewID].y = (clip.y + 1.0) * 0.5 * (double)view.viewport[3] + (double)view.viewport[1];
             }

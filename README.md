@@ -348,7 +348,7 @@ void addLabel(const std::string& text)
 {
     // Start by acquiring a write-lock on the registry.
     // The lock will release automatically at the end of the current scope.
-    auto& [lock, registry] = app.registry.write();
+    auto [lock, registry] = app.registry.write();
 
     // create a new entity
     auto entity = registry.create();
@@ -393,7 +393,13 @@ void function_that_only_reads_or_edits_things(Application& app)
 }
 ```
 
-You can also use a lambda function to encapsulate your updates:
+You can also use this idiom, if you think it feels cleaner:
+```c++
+auto reader = app.registry.read();
+auto& visibility = reader->get<Visibility>(e);
+```
+
+Or you can also use lambda functions:
 ```c++
 app.registry.write([&](entt::registry& registry)
     {

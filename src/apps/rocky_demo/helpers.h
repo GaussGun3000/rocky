@@ -297,6 +297,15 @@ namespace ImGuiLTable
         return true;
     }
 
+    static bool Separator()
+    {
+        ImGui::Separator();
+        ImGui::TableNextColumn();
+        ImGui::Separator();
+        ImGui::TableNextColumn();
+        return true;
+    }
+
     static bool Bitfield(const char* label, int step, std::uint16_t* value)
     {
         bool changed = false;

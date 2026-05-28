@@ -126,7 +126,7 @@ auto Demo_OrderedRendering = [](Application& app)
                 {
                     for (auto& line : lines) {
                         auto& v = reg.get<Visibility>(line);
-                        setVisible(reg, line, linesVisible);
+                        v.visible = linesVisible;
                     }
                 }
             });

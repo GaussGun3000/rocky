@@ -1,6 +1,6 @@
 /**
  * rocky c++
- * Copyright 2023 Pelican Mapping
+ * Copyright 2026 Pelican Mapping
  * MIT License
  */
 #pragma once
@@ -11,44 +11,25 @@ using namespace ROCKY_NAMESPACE;
 auto Demo_Model = [](Application& app)
 {
     static entt::entity entity = entt::null;
-    static double scale = 50000.0;
+    static double scale = 150.0;
     static bool autoScale = false;
 
     if (entity == entt::null)
     {
         auto [_, reg] = app.registry.write();
 
-#if 1
-        // Create a simple VSG model using the Builder.
-        vsg::Builder builder;
-        vsg::GeometryInfo gi;
-        gi.color = to_vsg(StockColor::Cyan);
-        auto node = builder.createBox(gi, vsg::StateInfo{});
-#else
-        // Or, load it from disk.
-        auto node = vsg::read_cast<vsg::Node>("D:/data/models/nasa/C130_WFF_AIR_0824.glb", app.vsgcontext->readerWriterOptions);
-        scale = 100.0;
-#endif
-
-        app.vsgcontext->compile(node);
-
-        vsg::ComputeBounds cb;
-        node->accept(cb);
-        auto radius = vsg::length(cb.bounds.max - cb.bounds.min) * 0.5;
-
         // New entity to host our model
         entity = reg.create();
 
-        // The model component; we just set the node directly.
-        auto& model = reg.emplace<NodeGraph>(entity);
-        model.node = node;
+        // The model component.
+        auto& model = reg.emplace<Model>(entity);
+        model.uri = URI("https://readymap.org/readymap/filemanager/download/public/models/C130_WFF_AIR_0824.glb");
 
         // A transform component to place and move it on the map
         auto& transform = reg.emplace<Transform>(entity);
-        transform.position = GeoPoint(SRS::WGS84, 50, 0, 0);
+        transform.position = GeoPoint(SRS::WGS84, 41.8, 1.0, 4100.0);
         transform.localMatrix = glm::scale(glm::dmat4(1), glm::dvec3(scale));
         transform.topocentric = true;
-        transform.radius = radius;
 
         // Test the PixelScale component
         auto& ps = reg.emplace<PixelScale>(entity);
@@ -58,11 +39,21 @@ auto Demo_Model = [](Application& app)
         app.vsgcontext->requestFrame();
     }
 
-    if (ImGuiLTable::Begin("model"))
-    {
-        auto [_, reg] = app.registry.read();
+    auto [_, reg] = app.registry.read();
 
+    auto& model = reg.get<Model>(entity);
+    if (model.error)
+    {
+        ImGui::TextWrapped("Failure: %s", model.error->string().c_str());
+    }
+    else if (model.radius <= 0.0)
+    {
+        ImGui::TextUnformatted("Loading...");
+    }
+    else if (ImGuiLTable::Begin("model"))
+    {
         auto& v = reg.get<Visibility>(entity).visible[0];
+
         if (ImGuiLTable::Checkbox("Show", &v))
             setVisible(reg, entity, v);
 
@@ -124,20 +115,20 @@ auto Demo_Model = [](Application& app)
         }
 
         static bool tethering = false;
-        if (ImGuiLTable::Checkbox("Tethering", &tethering))
+        if (ImGuiLTable::Checkbox("Tether", &tethering))
         {
             auto& view = app.display.window(0).view(0);
             if (auto manip = MapManipulator::get(view.vsgView))
             {
                 if (tethering)
                 {
-                    auto& xform = reg.get<Transform>(entity);
+                    auto&& [model, xform] = reg.get<Model, Transform>(entity);
                     auto scale = xform.localMatrix[0][0]; // assume uniform scale
 
                     // To tether, create a Viewpoint object with a "pointFunction" that
                     // returns the current location of the tracked object.
                     Viewpoint vp = manip->viewpoint();
-                    vp.range = xform.radius * scale * 3.0;
+                    vp.range = model.radius * scale * 3.0;
                     vp.pointFunction = [&]()
                         {
                             return app.registry.read()->get<Transform>(entity).position;

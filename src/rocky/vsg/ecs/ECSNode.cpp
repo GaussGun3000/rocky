@@ -11,6 +11,7 @@
 #include "LabelSystem.h"
 #include "WidgetSystem.h"
 #include "TransformSystem.h"
+#include "ModelSystem.h"
 #include "NodeGraphSystem.h"
 
 ROCKY_ABOUT(entt, ENTT_VERSION);
@@ -118,6 +119,7 @@ ECSNode::ECSNode(Registry& reg, bool addDefaultSystems) :
     {
         add(TransformSystem::create(registry));
         add(NodeSystemNode::create(registry));
+        add(ModelSystemNode::create(registry));
         add(MeshSystemNode::create(registry));
         add(LineSystemNode::create(registry));
         add(PointSystemNode::create(registry));

@@ -354,9 +354,7 @@ BackgroundServices::start(const std::string& name, IOOptions& io, Function funct
         };
 
     jobs::context context{ std::string(name), io.services().jobs.get_pool(name, 1) };
-    tasks.emplace_back(io.services().jobs.dispatch(delegate, context));
-
-    return tasks.back();
+    return tasks.emplace_back(io.services().jobs.dispatch(delegate, context));
 }
 
 void

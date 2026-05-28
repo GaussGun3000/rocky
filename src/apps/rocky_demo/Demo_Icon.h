@@ -98,7 +98,7 @@ auto Demo_Icon = [](Application& app)
 
         auto& v = reg.get<Visibility>(entity).visible[0];
         if (ImGuiLTable::Checkbox("Show", &v))
-            setVisible(reg, entity, v);
+            v.visible = v.visible[0];
 
         auto& icon = reg.get<MyIcon>(entity);
         ImGuiLTable::SliderFloat("Pixel size", &icon.sizePixels, 1.0f, 128.f, "%.0f");

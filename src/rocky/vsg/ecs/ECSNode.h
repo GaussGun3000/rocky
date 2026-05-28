@@ -91,19 +91,19 @@ namespace ROCKY_NAMESPACE
             void update(VSGContext vsgcontext) override;
 
             inline void requestCompile(vsg::Object* object) const {
-                _toCompile->addChild(vsg::ref_ptr<vsg::Object>(object));
+                if (object) _toCompile->addChild(vsg::ref_ptr<vsg::Object>(object));
             }
             inline void dispose(vsg::Object* object) const {
-                _toDispose->addChild(vsg::ref_ptr<vsg::Object>(object));
+                if (object) _toDispose->addChild(vsg::ref_ptr<vsg::Object>(object));
             }
             inline void requestUpload(vsg::BufferInfo* bi) const {
-                _buffersToUpload.emplace_back(bi);
+                if (bi) _buffersToUpload.emplace_back(bi);
             }
             inline void requestUpload(vsg::BufferInfoList& bil) const {
                 _buffersToUpload.insert(_buffersToUpload.end(), bil.begin(), bil.end());
             }
             inline void requestUpload(vsg::ImageInfo* bi) const {
-                _imagesToUpload.emplace_back(bi);
+                if (bi) _imagesToUpload.emplace_back(bi);
             }
             inline void requestUpload(vsg::ImageInfoList& bil) const {
                 _imagesToUpload.insert(_imagesToUpload.end(), bil.begin(), bil.end());

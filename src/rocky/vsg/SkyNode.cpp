@@ -5,7 +5,7 @@
  */
 #include "SkyNode.h"
 #include "VSGUtils.h"
-#include "PipelineState.h"
+#include "ViewDependentState.h"
 #include <rocky/Ellipsoid.h>
 #include <rocky/Ephemeris.h>
 
@@ -149,7 +149,7 @@ namespace
             VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, {});
 
         // View-dependent data (lights) - needed in fragment shader for sun direction
-        PipelineUtils::addViewDependentState(shaderSet);
+        addViewDependentStateToShaderSet(shaderSet);
 
         // Push constants available in both vertex and fragment stages
         shaderSet->addPushConstantRange("pc", "", VK_SHADER_STAGE_ALL, 0, 128);
@@ -176,7 +176,8 @@ namespace
 
         // Enable atmosphere UBO and view-dependent data
         pipelineConfig->enableDescriptor("u_atmo");
-        PipelineUtils::enableViewDependentState(pipelineConfig);
+
+        enableViewDependentStateUniforms(pipelineConfig);
 
         struct SetPipelineStates : public vsg::Visitor
         {
