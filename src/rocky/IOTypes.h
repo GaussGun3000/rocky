@@ -9,7 +9,6 @@
 #include <rocky/Threading.h>
 #include <rocky/Cache.h>
 #include <rocky/Units.h>
-#include <rocky/Utils.h>
 #include <optional>
 #include <string>
 #include <cstdint>
@@ -95,9 +94,6 @@ namespace ROCKY_NAMESPACE
 
         //! Parser for units types
         UnitsParser unitsParser;
-
-        //! Background task handler
-        detail::BackgroundServices background;
     };
 
     /**
