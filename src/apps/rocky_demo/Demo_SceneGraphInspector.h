@@ -1107,30 +1107,36 @@ auto Demo_SceneGraphInspector = [](Application& app)
         if (!selectedObject)
             selectedObject = app.scene;
 
-        if (ImGui::BeginTable("SceneGraphInspector", 2, ImGuiTableFlags_Resizable | ImGuiTableFlags_BordersInnerV | ImGuiTableFlags_SizingStretchProp))
+        if (ImGui::Begin("scenegraphinspectorwindow"))
         {
-            ImGui::TableSetupColumn("Scene graph", ImGuiTableColumnFlags_WidthStretch, 0.55f);
-            ImGui::TableSetupColumn("Properties", ImGuiTableColumnFlags_WidthStretch, 0.45f);
-            ImGui::TableNextRow();
-
-            ImGui::TableNextColumn();
-            if (ImGui::BeginChild("SceneGraphTree", ImVec2(0, 420), true))
+            if (ImGui::BeginTable("SceneGraphInspector", 2, ImGuiTableFlags_Resizable | ImGuiTableFlags_BordersInnerV | ImGuiTableFlags_SizingStretchProp))
             {
-                SceneGraphInspectorVisitor inspector(selectedObject);
-                app.scene->accept(inspector);
-            }
-            ImGui::EndChild();
+                ImGui::TableSetupColumn("Scene graph", ImGuiTableColumnFlags_WidthStretch, 0.55f);
+                ImGui::TableSetupColumn("Properties", ImGuiTableColumnFlags_WidthStretch, 0.45f);
+                ImGui::TableNextRow();
 
-            ImGui::TableNextColumn();
-            if (ImGui::BeginChild("SceneGraphProperties", ImVec2(0, 420), true))
-            {
-                auto object = selectedObject.ref_ptr();
-                scene_graph_inspector_render_object_properties(object.get(), app.vsgcontext);
-            }
-            ImGui::EndChild();
+                ImGui::TableNextColumn();
+                if (ImGui::BeginChild("SceneGraphTree", ImVec2(0, -1), true))
+                {
+                    SceneGraphInspectorVisitor inspector(selectedObject);
+                    app.scene->accept(inspector);
+                }
+                ImGui::EndChild();
 
-            ImGui::EndTable();
+                ImGui::TableNextColumn();
+                if (ImGui::BeginChild("SceneGraphProperties", ImVec2(0, -1), true))
+                {
+                    auto object = selectedObject.ref_ptr();
+                    scene_graph_inspector_render_object_properties(object.get(), app.vsgcontext);
+                }
+                ImGui::EndChild();
+
+                ImGui::EndTable();
+            }
+
+            ImGui::End();
         }
+        ImGui::TextUnformatted("Collapse to close");
     }
     else
     {
