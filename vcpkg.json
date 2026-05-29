@@ -14,12 +14,10 @@
         { "name" : "nlohmann-json" },
         { "name" : "openssl" },
         { "name" : "proj", "features": [ "tools" ]},
-        { "name" : "qtbase", "default-features" : false, "features" : ["widgets", "vulkan"] },
         { "name" : "spdlog" },
         { "name" : "sqlite3" },
         { "name" : "vsg", "features" : [ "windowing" ] },
         { "name" : "vsgxchange", "features": [ "assimp", "freetype", "draco" ] },
-        { "name" : "vsgqt" },
         { "name" : "zlib" }
     ]
 }
