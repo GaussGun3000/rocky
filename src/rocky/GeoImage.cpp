@@ -113,7 +113,7 @@ GeoImage::getPixel(double x, double y, int& s, int& t) const
 void
 GeoImage::composite(const std::vector<GeoImage>& sources, const std::vector<float>& opacities)
 {
-    double x, y;
+    double x = 0.0, y = 0.0;
     bool have_opacities = opacities.size() == sources.size();
 
     std::vector<SRSOperation> xforms;
@@ -128,7 +128,8 @@ GeoImage::composite(const std::vector<GeoImage>& sources, const std::vector<floa
     {
         for (unsigned t = 0; t < _image->height(); ++t)
         {
-            getCoord(s, t, x, y);
+            if (!getCoord(s, t, x, y))
+                continue;
 
             for (unsigned layer = 0; layer < _image->depth(); ++layer)
             {
@@ -139,7 +140,8 @@ GeoImage::composite(const std::vector<GeoImage>& sources, const std::vector<floa
                     auto r = sources[i].read(xforms[i], x, y, layer);
                     if (r.ok())
                     {
-                        r.value().a *= opacities[i];
+                        if (have_opacities)
+                            r.value().a *= opacities[i];
                         float a = r.value().a;
                         pixels.emplace_back(std::move(r.value()));
                         if (a >= 1.0f)

@@ -158,7 +158,6 @@ namespace
             double E = M + e * sin(M) * (1.0 + e * cos(M));
             nrad(E);
 
-            double Estart = E;
             double Eerror = 9;
             int iterations = 0;
             while (Eerror > 0.0005 && iterations < 20)

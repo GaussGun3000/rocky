@@ -212,24 +212,24 @@ namespace ROCKY_NAMESPACE
                 return _capacity;
             }
 
-            std::size_t size() const override
+            inline std::size_t size() const override
             {
                 std::scoped_lock lock(_mutex);
                 return _map.size();
             }
 
-            std::uint32_t hits() const override
+            inline std::uint32_t hits() const override
             {
                 return _hits;
             }
 
-            std::uint32_t misses() const override
+            inline std::uint32_t misses() const override
             {
                 return _misses;
             }
 
             //! Clears all entries from the cache and resets statistics.
-            inline void clear()
+            inline void clear() override
             {
                 std::scoped_lock L(_mutex);
                 _cache.clear();

@@ -1,6 +1,6 @@
 /**
  * rocky c++
- * Copyright 2023 Pelican Mapping
+ * Copyright 2026 Pelican Mapping
  * MIT License
  */
 #pragma once
@@ -8,6 +8,7 @@
 #include <rocky/ecs/Registry.h>
 #include <rocky/ecs/Transform.h>
 #include <rocky/vsg/ecs/System.h>
+#include <rocky/vsg/ecs/TransformDetail.h>
 
 namespace ROCKY_NAMESPACE
 {
@@ -37,64 +38,64 @@ namespace ROCKY_NAMESPACE
                 double dt = 1e-9 * (double)(time - last_time).count();
 
                 // Join query all motions + transform pairs:
-                reg.view<Motion, Transform, TransformDetail>().each([&](auto& motion, auto& transform, auto& transform_detail)
+                for (auto&& [entity, motion, transform, transform_detail] : reg.view<Motion, Transform, TransformDetail>().each())
+                {
+                    if (motion.velocity != zero && transform.revision == transform_detail.sync.revision)
                     {
-                        if (motion.velocity != zero && transform.revision == transform_detail.sync.revision)
-                        {
-                            auto& pos = transform.position;
+                        auto& pos = transform.position;
 
-                            SRSOperation pos_to_world;
-                            if (!pos.srs.isGeocentric())
-                                pos_to_world = pos.srs.to(pos.srs.geocentricSRS());
+                        SRSOperation pos_to_world;
+                        if (!pos.srs.isGeocentric())
+                            pos_to_world = pos.srs.to(pos.srs.geocentricSRS());
 
-                            // move the entity using a velocity vector in the local tangent plane
-                            glm::dvec3 world;
-                            pos_to_world(pos, world);
-                            auto l2w = pos.srs.ellipsoid().topocentricToGeocentricMatrix(world);
+                        // move the entity using a velocity vector in the local tangent plane
+                        glm::dvec3 world;
+                        pos_to_world(pos, world);
+                        auto l2w = pos.srs.ellipsoid().topocentricToGeocentricMatrix(world);
 
-                            world = l2w * (motion.velocity * dt);
+                        world = l2w * (motion.velocity * dt);
 
-                            pos_to_world.inverse(world, pos);
+                        pos_to_world.inverse(world, pos);
 
-                            transform.dirty(reg);
-                        }
+                        transform.dirty(reg);
+                    }
 
-                        motion.velocity += motion.acceleration * dt;
-                    });
+                    motion.velocity += motion.acceleration * dt;
+                }
 
-                reg.view<MotionGreatCircle, Transform, TransformDetail>().each([&](auto& motion, auto& transform, auto& detail)
+                for (auto&& [entity, motion, transform, detail] : reg.view<MotionGreatCircle, Transform, TransformDetail>().each()) //[&](auto& motion, auto& transform, auto& detail)
+                {
+                    // Note. For this demo, we just use the length of the velocity and acceleration
+                    // vectors and ignore direction.
+                    if (motion.velocity != zero && transform.revision == detail.sync.revision)
                     {
-                        // Note. For this demo, we just use the length of the velocity and acceleration
-                        // vectors and ignore direction.
-                        if (motion.velocity != zero && transform.revision == detail.sync.revision)
-                        {
-                            auto& pos = transform.position;
+                        auto& pos = transform.position;
 
-                            SRSOperation pos_to_world;
-                            if (!pos.srs.isGeocentric())
-                                pos_to_world = pos.srs.to(pos.srs.geocentricSRS());
+                        SRSOperation pos_to_world;
+                        if (!pos.srs.isGeocentric())
+                            pos_to_world = pos.srs.to(pos.srs.geocentricSRS());
 
-                            glm::dvec3 world;
-                            pos_to_world(pos, world);
+                        glm::dvec3 world;
+                        pos_to_world(pos, world);
 
-                            // calculate the rotation angle for the distance to travel:
-                            double distance = glm::length(motion.velocity * dt);
-                            double R = glm::length(world);
-                            double circ = 2.0 * glm::pi<double>() * R;
-                            double angle = 360.0 * distance / circ;
+                        // calculate the rotation angle for the distance to travel:
+                        double distance = glm::length(motion.velocity * dt);
+                        double R = glm::length(world);
+                        double circ = 2.0 * glm::pi<double>() * R;
+                        double angle = 360.0 * distance / circ;
 
-                            // bailout if the time delta was too small to cause any motion
-                            if (glm::epsilonEqual(distance, 0.0, 1e-6) || glm::epsilonEqual(angle, 0.0, 1e-6))
-                                return;
+                        // bailout if the time delta was too small to cause any motion
+                        if (glm::epsilonEqual(distance, 0.0, 1e-6) || glm::epsilonEqual(angle, 0.0, 1e-6))
+                            return;
 
-                            // move the point:
-                            pos = pos.srs.ellipsoid().rotate(world, motion.normalAxis, angle);
+                        // move the point:
+                        pos = pos.srs.ellipsoid().rotate(world, motion.normalAxis, angle);
 
-                            transform.dirty(reg);
-                        }
+                        transform.dirty(reg);
+                    }
 
-                        motion.velocity += motion.acceleration * dt;
-                    });
+                    motion.velocity += motion.acceleration * dt;
+                }
             }
 
             last_time = time;

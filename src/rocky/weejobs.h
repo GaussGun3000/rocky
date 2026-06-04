@@ -1077,11 +1077,7 @@ namespace WEEJOBS_NAMESPACE
             {
                 _metrics.running++;
 
-                auto t0 = std::chrono::steady_clock::now();
-
                 bool job_executed = next._delegate();
-
-                auto duration = std::chrono::steady_clock::now() - t0;
 
                 if (job_executed == false)
                 {
@@ -1188,7 +1184,7 @@ namespace WEEJOBS_NAMESPACE
 
             context copy_of_con = con;
 
-            _shared->_continuation = [rt, func, copy_of_con, weak_shared, continuation_promise]() mutable
+            _shared->_continuation = [&rt, func, copy_of_con, weak_shared, continuation_promise]() mutable
                 {
                     auto shared = weak_shared.lock();
 
@@ -1280,7 +1276,7 @@ namespace WEEJOBS_NAMESPACE
             std::weak_ptr<shared_t> weak_shared = _shared;
             auto copy_of_con = con;
 
-            _shared->_continuation = [rt, func, weak_shared, copy_of_con]() mutable
+            _shared->_continuation = [&rt, func, weak_shared, copy_of_con]() mutable
                 {
                     auto shared = weak_shared.lock();
                     if (shared)

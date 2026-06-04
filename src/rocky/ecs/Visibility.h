@@ -1,6 +1,6 @@
 /**
  * rocky c++
- * Copyright 2023 Pelican Mapping
+ * Copyright 2026 Pelican Mapping
  * MIT License
  */
 #pragma once
@@ -8,6 +8,7 @@
 #include <rocky/Rendering.h>
 #include <cstdint>
 #include <climits>
+#include <entt/entt.hpp>
 
 namespace ROCKY_NAMESPACE
 {
@@ -48,11 +49,11 @@ namespace ROCKY_NAMESPACE
     //! @param e Entity id
     //! @param value New visibility state
     //! @param view_index Index of view to set visibility
-    inline void setVisible(entt::registry& registry, entt::entity e, bool value, int view_index = -1)
+    inline void setVisible(entt::registry& registry, entt::entity entity, bool value, int view_index = -1)
     {
-        ROCKY_SOFT_ASSERT_AND_RETURN(e != entt::null, void());
+        ROCKY_SOFT_ASSERT_AND_RETURN(entity != entt::null, void());
 
-        auto& visibility = registry.get<Visibility>(e);
+        auto& visibility = registry.get<Visibility>(entity);
 
         if (view_index >= 0)
             visibility.visible[view_index] = value;

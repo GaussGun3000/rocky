@@ -266,7 +266,6 @@ TileKey::intersectingKeys(const Profile& targetProfile) const
         return s_previous.result;
     
     std::vector<TileKey> output;
-    unsigned candidateTiles = 0;
 
     // convert the source extent to geodetic:
     auto geoSRS = profile.srs().geodeticSRS();
@@ -333,8 +332,6 @@ TileKey::intersectingKeys(const Profile& targetProfile) const
         int colmax = std::clamp((int)std::floor((target_ex.xmax() - target_profile_ex.xmin()) / dims.x), 0, (int)tiles.x - 1);
         int rowmin = std::clamp((int)std::floor((target_profile_ex.ymax() - target_ex.ymax()) / dims.y), 0, (int)tiles.y - 1);
         int rowmax = std::clamp((int)std::floor((target_profile_ex.ymax() - target_ex.ymin()) / dims.y), 0, (int)tiles.y - 1);
-
-        candidateTiles = (colmax - colmin + 1) * (rowmax - rowmin + 1);
 
         // todo: intersect test the boundary against the candidate tiles.
         for (unsigned col = colmin; col <= (unsigned)colmax; ++col)

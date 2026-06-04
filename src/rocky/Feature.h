@@ -275,6 +275,7 @@ namespace ROCKY_NAMESPACE
             struct implementation {
                 virtual bool hasMore() const = 0;
                 virtual Feature next() = 0;
+                virtual ~implementation() {}
             };
 
         public:

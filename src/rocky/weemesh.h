@@ -11,6 +11,7 @@
 #include <set>
 #include <unordered_set>
 #include <vector>
+#include <list>
 
 #define marker_is_set(INDEX, BITS) ((markers[INDEX] & BITS) != 0)
 #define marker_not_set(INDEX, BITS) ((markers[INDEX] & BITS) == 0)

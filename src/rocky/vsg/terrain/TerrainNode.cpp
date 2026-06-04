@@ -103,7 +103,8 @@ TerrainProfileNode::update(VSGContext vsgcontext)
             if (_tiles.update(_tileFactory, vsgcontext))
                 changes = true;
 
-            changes = _tileFactory->update(vsgcontext);
+            if (_tileFactory->update(vsgcontext))
+                changes = true;
         }
     }
 

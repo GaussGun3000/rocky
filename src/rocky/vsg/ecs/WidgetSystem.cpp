@@ -170,7 +170,6 @@ WidgetSystemNode::traverse(vsg::ConstVisitor& v) const
 {
     // it might be an ECS visitor, in which case we'll communicate the entity being visited
     auto* ecsVisitor = dynamic_cast<ECSVisitor*>(&v);
-    std::uint32_t viewID = ecsVisitor ? ecsVisitor->viewID : 0;
 
     if (ecsVisitor)
     {

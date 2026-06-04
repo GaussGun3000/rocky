@@ -168,7 +168,6 @@ GeometryPool::createIndices(const Settings& settings) const
 
     unsigned numVertsInSurface = (tileSize*tileSize);
     unsigned numVertsInSkirt = needsSkirt ? (tileSize - 1) * 2u * 4u : 0;
-    unsigned numVerts = numVertsInSurface + numVertsInSkirt;
     unsigned numIndicesInSurface = (tileSize - 1) * (tileSize - 1) * 6;
     unsigned numIncidesInSkirt = getNumSkirtElements(settings);
     unsigned numIndices = numIndicesInSurface + numIncidesInSkirt;
@@ -185,8 +184,6 @@ GeometryPool::createIndices(const Settings& settings) const
             int i01 = i00 + tileSize;
             int i10 = i00 + 1;
             int i11 = i01 + 1;
-
-            unsigned k = j * tileSize + i;
 
             indices->set(p++, i01);
             indices->set(p++, i00);
@@ -270,8 +267,8 @@ GeometryPool::createGeometry(const TileKey& tileKey, const Settings& settings, C
     const uint32_t numVertsInSurface    = (tileSize*tileSize);
     const uint32_t numVertsInSkirt      = needsSkirt ? (tileSize-1)*2u * 4u : 0;
     const uint32_t numVerts             = numVertsInSurface + numVertsInSkirt;
-    const uint32_t numIndiciesInSurface = (tileSize-1) * (tileSize-1) * 6;
-    const uint32_t numIncidesInSkirt    = getNumSkirtElements(settings);
+    //const uint32_t numIndiciesInSurface = (tileSize-1) * (tileSize-1) * 6;
+    //const uint32_t numIncidesInSkirt    = getNumSkirtElements(settings);
 
     ROCKY_TODO("GLenum mode = gpuTessellation ? GL_PATCHES : GL_TRIANGLES;");
 

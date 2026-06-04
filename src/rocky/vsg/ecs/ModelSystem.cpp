@@ -228,17 +228,17 @@ ModelSystemNode::update(VSGContext vsgcontext)
                     if (det.node)
                         dispose(det.node);
 
-                    auto loadModel = [&model, io(vsgcontext->io), options(vsgcontext->readerWriterOptions)](Cancelable& c)
+                    auto loadModel = [uri(model.uri), io(vsgcontext->io), options(vsgcontext->readerWriterOptions)](Cancelable& c)
                         -> Result<vsg::ref_ptr<vsg::Node>>
                         {
                             if (c.canceled())
                                 return Failure_OperationCanceled;
 
-                            auto rr = model.uri.read(io);
+                            auto rr = uri.read(io);
                             if (!rr)
                                 return rr.error();
 
-                            std::filesystem::path path(model.uri.full());
+                            std::filesystem::path path(uri.full());
                             auto opts = vsg::clone(options);
                             opts->extensionHint = path.extension();
                             if (opts->extensionHint.empty())

@@ -331,9 +331,6 @@ TerrainState::updateRenderModel(const TileKey& key, const TerrainTileRenderModel
         renderModel.color.image = layer.image.image();
         renderModel.color.matrix = layer.matrix;
 
-        auto width = renderModel.color.image->width();
-        auto height = renderModel.color.image->height();
-
         auto data = wrapImageInVSG(renderModel.color.image);
         if (data)
         {

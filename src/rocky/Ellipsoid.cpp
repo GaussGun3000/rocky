@@ -202,7 +202,7 @@ Ellipsoid::intersectGeocentricLine(
     glm::dvec3& out_world) const
 {
     double dist2 = 0.0;
-    glm::dvec3 v;
+    glm::dvec3 v(0, 0, 0);
     glm::dvec3 p0 = p0_world * _ellipsoidToUnitSphere;
     glm::dvec3 p1 = p1_world * _ellipsoidToUnitSphere;
 

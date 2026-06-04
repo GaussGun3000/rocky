@@ -253,8 +253,8 @@ MapManipulator::InputSpec::operator < (const InputSpec& rhs) const {
 void
 MapManipulator::Settings::expandSpec(const InputSpec& input, InputSpecs& output) const
 {
-    int e = input._event_type;
-    int i = input._input_mask;
+    //int e = input._event_type;
+    //int i = input._input_mask;
     int m = input._modkey_mask;
 
     if (HASMODKEY(m, vsg::MODKEY_Control))
@@ -1064,7 +1064,7 @@ MapManipulator::apply(vsg::MoveEvent& moveEvent)
         moveEvent.mask, // button mask
         _keyPress.has_value() ? _keyPress->keyModifier : 0);
 
-    bool wasContinuous = _continuous > 0;
+    //bool wasContinuous = _continuous > 0;
     if (_lastAction.getBoolOption(OPTION_CONTINUOUS, false))
         ++_continuous;
     else

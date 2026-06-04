@@ -444,6 +444,11 @@ DisplayManager::configureTraits(vsg::WindowTraits* traits)
         Log()->warn("Not available: {}", VK_EXT_EXTENDED_DYNAMIC_STATE_3_EXTENSION_NAME);
         loadedAllRequiredExtensions = false;
     }
+
+    if (!loadedAllRequiredExtensions)
+    {
+        Log()->warn("Unable to load one or more required extensions");
+    }
 }
 
 

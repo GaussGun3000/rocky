@@ -641,7 +641,7 @@ namespace
 
         if (!have_centroid && feature.extent.getCentroid(centroid.x, centroid.y))
         {
-            have_centroid = feature_to_geo.transform(centroid, centroid);
+            feature_to_geo.transform(centroid, centroid);
         }
 
         // transform to gnomonic. We are not using SRS/PROJ for the gnomonic projection

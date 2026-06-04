@@ -388,8 +388,6 @@ GDAL_detail::Driver::open(
     DataExtentList* layerDataExtents,
     const IOOptions& io)
 {
-    bool info = (layerDataExtents != NULL);
-
     _name = name;
     _layer = layer;
 
@@ -658,7 +656,6 @@ GDAL_detail::Driver::open(
     const char* pora = _srcDS->GetMetadataItem("AREA_OR_POINT");
     bool is_area = pora != nullptr && toLower(std::string(pora)) == "area";
 
-    bool clamped = false;
     if (srs.isGeodetic())
     {
         if (is_area && (_bounds.xmin < -180.0 || _bounds.xmax > 180.0))
@@ -671,7 +668,6 @@ GDAL_detail::Driver::open(
         {
             _bounds.xmin = -180;
             _bounds.xmax = 180;
-            clamped = true;
         }
 
         if (is_area && (_bounds.ymin < -90.0 || _bounds.ymax > 90.0))
@@ -684,7 +680,6 @@ GDAL_detail::Driver::open(
         {
             _bounds.ymin = -90;
             _bounds.ymax = 90;
-            clamped = true;
         }
     }
     _extents = GeoExtent(srs, _bounds);
@@ -813,8 +808,6 @@ GDAL_detail::Driver::createImage(const TileKey& key, unsigned tileSize, const IO
 
     double west = intersection.xmin();
     double east = intersection.xmax();
-    double north = intersection.ymax();
-    double south = intersection.ymin();
 
     // The extents and the intersection will be normalized between -180 and 180 longitude if they are geographic.
     // However, the georeferencing will expect the coordinates to be in the same longitude frame as the original dataset,
@@ -867,10 +860,6 @@ GDAL_detail::Driver::createImage(const TileKey& key, unsigned tileSize, const IO
     int target_height = (int)ceil((intersection.height() / key.extent().height())*(double)tileSize);
     int tile_offset_left = (int)floor((offset_left / key.extent().width()) * (double)tileSize);
     int tile_offset_top = (int)floor((offset_top / key.extent().height()) * (double)tileSize);
-
-    // Compute spacing
-    double dx = (xmax - xmin) / (double)(tileSize - 1);
-    double dy = (ymax - ymin) / (double)(tileSize - 1);
 
     // Return if parameters are out of range.
     if (src_width <= 0 || src_height <= 0 || target_width <= 0 || target_height <= 0)
@@ -982,11 +971,6 @@ GDAL_detail::Driver::createImage(const TileKey& key, unsigned tileSize, const IO
         bool isElevation = false;
 
         GDALDataType gdalDataType = bandGray->GetRasterDataType();
-
-        int gdalSampleSize =
-            (gdalDataType == GDT_Byte) ? 1 :
-            (gdalDataType == GDT_UInt16 || gdalDataType == GDT_Int16) ? 2 :
-            4;
 
         if (gdalDataType == GDT_Int16 || gdalDataType == GDT_UInt16)
         {

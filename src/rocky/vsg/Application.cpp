@@ -260,12 +260,6 @@ Application::ctor(int& argc, char** argv)
             commandLineStatus = r.error();
     }
 
-    bool indirect = false;
-    if (commandLine.read({ "--indirect" }))
-    {
-        indirect = true;
-    }
-
     // if there are any command-line arguments remaining, assume the first is a map file.
     if (commandLine.argc() > 1 && commandLineStatus.ok())
     {

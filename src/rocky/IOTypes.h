@@ -57,8 +57,8 @@ namespace ROCKY_NAMESPACE
     {
     public:
         Services();
-        Services(const Services&) = default;
-        Services& operator=(const Services&) = default;
+        Services(const Services&) = delete;
+        Services& operator=(const Services&) = delete;
         Services(Services&&) noexcept = delete;
         Services& operator=(Services&&) noexcept = delete;
 

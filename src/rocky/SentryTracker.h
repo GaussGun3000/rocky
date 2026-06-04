@@ -5,6 +5,7 @@
  */
 #pragma once
 #include <rocky/Common.h>
+#include <list>
 
 namespace ROCKY_NAMESPACE
 {
