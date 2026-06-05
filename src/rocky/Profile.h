@@ -157,6 +157,7 @@ namespace ROCKY_NAMESPACE
         std::shared_ptr<Data> _shared;
 
         void setup(const std::string& wellKnownName);
+
         void setup(const SRS&, const Box& bounds, unsigned dim_x, unsigned dim_y, 
             const Box& geodeticBounds = {}, const std::vector<Profile> & = {});
     };

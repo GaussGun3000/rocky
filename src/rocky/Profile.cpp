@@ -8,6 +8,7 @@
 #include "Math.h"
 #include "Utils.h"
 #include "json.h"
+#include <rocky/contrib/EarthFileImporter.h>
 
 using namespace ROCKY_NAMESPACE;
 using namespace ROCKY_NAMESPACE::detail;
@@ -131,8 +132,10 @@ Profile::Profile(const SRS& srs, const Box& bounds, unsigned x_tiles_at_lod0, un
 }
 
 void
-Profile::setup(const std::string& name)
+Profile::setup(const std::string& in_name)
 {
+    auto name = trim(in_name);
+
     if (ciEquals(name, "plate-carree") ||
         ciEquals(name, "plate-carre") ||
         ciEquals(name, "eqc-wgs84"))
@@ -154,7 +157,7 @@ Profile::setup(const std::string& name)
         _shared->wellKnownName = "spherical-mercator";
         setup(SRS::SPHERICAL_MERCATOR, SRS::SPHERICAL_MERCATOR.bounds(), 1, 1);
     }
-    else if (name.find("+proj=longlat") != std::string::npos)
+    else if (name.find("+proj=longlat") == 0)
     {
         setup(SRS(name), Box(-180.0, -90.0, 180.0, 90.0), 2, 1);
     }
@@ -251,6 +254,43 @@ Profile::setup(const std::string& name)
                 Profile(SRS("+wktext +proj=qsc +units=m +R=1737400 +lat_0=0 +lon_0=180"), qscbox, 2, 2, Box(135.0, -45.0, 225.0, 45.0)),
                 Profile(SRS("+wktext +proj=qsc +units=m +R=1737400 +lat_0=0 +lon_0=-90"), qscbox, 2, 2, Box(-135.0, -45.0, -45.0, 45.0))
             });
+    }
+    else if (!name.empty() && name[0] == '{')
+    {
+        // Try the old osgEarth-style profile JSON encoding.
+        // Example:
+        //   {"profile":{"tx":"1","ty":"2","srs":"+proj=longlat +ellps=WGS84 +no_defs","vdatum":{},"xmax":"180","xmin":"-180","ymax":"90","ymin":"-90"}}
+        std::string tx, ty, srs, vdatum, xmin, ymin, xmax, ymax;
+
+        const auto j = parse_json(name);
+        auto profile_it = j.find("profile");
+        if (profile_it != j.end())
+        {
+            auto& p = *profile_it;
+            get_to(p, "tx", tx);
+            get_to(p, "num_tiles_wide_at_lod_0", tx); // alias
+            get_to(p, "ty", ty);
+            get_to(p, "num_tiles_high_at_lod_0", ty); // alias
+            get_to(p, "xmin", xmin);
+            get_to(p, "ymin", ymin);
+            get_to(p, "xmax", xmax);
+            get_to(p, "ymax", ymax);
+            get_to(p, "srs", srs);
+            get_to(p, "vdatum", vdatum);
+
+            // special handling for the egm96 vertican datum.
+            // todo: figure out a better generic approach (or don't since this is just backcompat stuff)
+            if (srs.length() > 5 && ciEquals(srs.substr(0, 5), "epsg:") && ciEquals(vdatum, "egm96"))
+            {
+                srs += "+5773";
+            }
+
+            setup(
+                SRS(srs),
+                Box(std::atof(xmin.c_str()), std::atof(ymin.c_str()), std::atof(xmax.c_str()), std::atof(ymax.c_str())),
+                std::atoi(tx.c_str()), std::atoi(ty.c_str()),
+                Box{}, {});
+        }
     }
 }
 
