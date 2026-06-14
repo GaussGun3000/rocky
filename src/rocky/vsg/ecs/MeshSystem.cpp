@@ -1,11 +1,10 @@
 
 /**
  * rocky c++
- * Copyright 2025 Pelican Mapping
+ * Copyright 2026 Pelican Mapping
  * MIT License
  */
 #include "MeshSystem.h"
-#include "ECSVisitors.h"
 #include "../ViewDependentState.h"
 
 using namespace ROCKY_NAMESPACE;

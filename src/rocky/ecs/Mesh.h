@@ -22,15 +22,6 @@ namespace ROCKY_NAMESPACE
 
         //! Reference SRS for the vertex data.
         SRS srs;
-
-        //! Reserve space for X points and Y indices
-        inline void reserve(size_t x, size_t y) {
-            vertices.reserve(x);
-            colors.reserve(x);
-            normals.reserve(x);
-            uvs.reserve(x);
-            indices.reserve(y);
-        }
     };
 
     //! Mesh style component

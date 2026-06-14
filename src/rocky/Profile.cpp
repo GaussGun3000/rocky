@@ -8,7 +8,6 @@
 #include "Math.h"
 #include "Utils.h"
 #include "json.h"
-#include <rocky/contrib/EarthFileImporter.h>
 
 using namespace ROCKY_NAMESPACE;
 using namespace ROCKY_NAMESPACE::detail;

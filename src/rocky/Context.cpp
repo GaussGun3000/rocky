@@ -1,13 +1,11 @@
 /**
  * rocky c++
- * Copyright 2025 Pelican Mapping
+ * Copyright 2026 Pelican Mapping
  * MIT License
  */
 #include "Context.h"
 #include "GeoExtent.h"
-#include "Profile.h"
 #include "SRS.h"
-#include "Threading.h"
 #include "Utils.h"
 #include "Version.h"
 #include "json.h"

@@ -111,6 +111,7 @@ auto Demo_Map = [](Application& app)
                     if (srs_name.empty() || srs_name == "unknown")
                         srs_name = tileLayer->profile.srs().definition();
                     ImGuiLTable::TextUnformatted("SRS:", srs_name.c_str());
+                    ImGuiLTable::TextUnformatted("Profile:", tileLayer->profile.to_json().c_str());
                 }
                 const GeoExtent& extent = layer->extent();
                 if (extent.valid())

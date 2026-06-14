@@ -124,15 +124,16 @@ auto Demo_Mesh_Relative = [](Application& app)
         };
 
         Color color{ 1, 0, 1, 0.85f };
-        geom.vertices.reserve(12 * 3);
-        geom.colors.reserve(12 * 3);
+        geom.vertices.reserve(48 * 3);
+        geom.colors.reserve(48 * 3);
+        geom.indices.reserve(48 * 3);
 
         for (int i = 0; i < 48; )
         {
-            for (int v = 0; v < 3; ++v)
+            for (int v = 0; v < 3; ++v, ++i)
             {
                 geom.indices.emplace_back(i);
-                geom.vertices.emplace_back(vertices[indices[i++]]);
+                geom.vertices.emplace_back(vertices[indices[i]]);
                 geom.colors.emplace_back(color);
             }
 
