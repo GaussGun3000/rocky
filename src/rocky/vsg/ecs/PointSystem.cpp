@@ -534,10 +534,10 @@ PointSystemNode::traverse(vsg::RecordTraversal& record) const
                         if (!styleDetail->renderer)
                         {
                             styleDetail->renderer = StyleRenderer<PointStyleDetail>::create();
-                            styleDetail->renderer->styleDetail = styleDetail;
                             styleDetail->renderer->pipeline = _pipelines[0].commands;
                         }
 
+                        styleDetail->renderer->styleDetail = styleDetail;
                         styleDetail->renderer->accept(record);
                     }
                 }
