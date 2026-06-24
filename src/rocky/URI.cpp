@@ -595,14 +595,6 @@ URI::Stream::to_string()
     return os.str();
 }
 
-//URI::URI(const std::string& location)
-//{
-//    _baseURI = location;
-//    _fullURI = location;
-//
-//    findRotation();
-//}
-
 URI::URI(const std::string& location, const URI::Context& context)
 {
     set(location, context);

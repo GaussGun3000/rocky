@@ -1,6 +1,6 @@
 /**
  * rocky c++
- * Copyright 2023 Pelican Mapping
+ * Copyright 2026 Pelican Mapping
  * MIT License
  */
 #pragma once
@@ -18,6 +18,6 @@
 #define VSG_VERSION_INTEGER VSG_COMPUTE_VERSION(VSG_VERSION_MAJOR, VSG_VERSION_MINOR, VSG_VERSION_PATCH)
 #endif
 
-#if VSG_API_VERSION_LESS(1, 1, 7)
-#error "Rocky requires VSG 1.1.7 or later"
+#if VSG_API_VERSION_LESS(1, 1, 12)
+#error "Rocky requires VSG 1.1.12 or later"
 #endif
