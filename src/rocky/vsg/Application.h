@@ -131,6 +131,9 @@ namespace ROCKY_NAMESPACE
         };
         Stats stats;
 
+        // A delete queu for safely disposing of VSG objects
+        vsg::ref_ptr<vsg::DeleteQueue> deleteQueue;
+
     public:
         //! Copy construction is disabled.
         Application(const Application&) = delete;
@@ -153,6 +156,7 @@ namespace ROCKY_NAMESPACE
         bool _lastFrameOK = true;
         int _framesUntilStopRender = 2; // for non-continuous rendering
         CallbackSubs _subscriptions;
+        vsg::ref_ptr<vsg::ActivityStatus> _activityStatus; // to safely shut down the delete queue thread
 
         void ctor(int& argc, char** argv);
 

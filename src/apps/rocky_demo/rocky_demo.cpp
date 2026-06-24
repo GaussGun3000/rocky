@@ -19,7 +19,6 @@ using namespace ROCKY_NAMESPACE;
 #include "Demo_Line.h"
 #include "Demo_Mesh.h"
 #include "Demo_Point.h"
-//#include "Demo_Icon.h"
 #include "Demo_Model.h"
 #include "Demo_Label.h"
 #include "Demo_Widget.h"

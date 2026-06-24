@@ -279,6 +279,22 @@ Application::ctor(int& argc, char** argv)
     }
 
     scene->addChild(systemsNode);
+
+
+    // let's try VSG's delete queue.
+    _activityStatus = vsg::ActivityStatus::create();
+    deleteQueue = vsg::DeleteQueue::create(_activityStatus);
+
+    vsgcontext->io.services().jobs.dispatch([deleteQueue(this->deleteQueue), activityStatus(this->_activityStatus)]() {
+        while (activityStatus->active()) {
+            deleteQueue->wait_then_clear();
+        }
+    });
+
+    // replace our context's stock disposer with vsg's:
+    vsgcontext->disposer = [deleteQueue(this->deleteQueue)](vsg::ref_ptr<vsg::Object> object) {
+        deleteQueue->add(object);
+    };
 }
 
 Application::~Application()
@@ -304,6 +320,9 @@ Application::~Application()
     }
 
     _subscriptions.clear();
+
+    // this will signal the delete-queue thread to exit.
+    _activityStatus->set(false);
 
     systemsNode = {};
     mapNode = {};
@@ -563,6 +582,8 @@ Application::frame()
             }
         }
     }
+
+    deleteQueue->advance(vsg::ref_ptr<vsg::FrameStamp>(viewer->getFrameStamp()));
 
     return viewer->active();
 }

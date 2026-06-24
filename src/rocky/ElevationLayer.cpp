@@ -342,10 +342,12 @@ ElevationLayer::createTileImplementation_internal(const TileKey& key, const IOOp
         }
     }
 
+#if 0
     else
     {
         Log()->debug("Failed to create heightfield for key {0} : {1}", key.str(), result.error().message);
     }
+#endif
 
     return result;
 }
