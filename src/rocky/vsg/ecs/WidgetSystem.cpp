@@ -31,19 +31,21 @@ namespace
             screen.fill({ -1.0, -1.0 });
         }
     };
+}
 
-    void on_construct_Widget(entt::registry& r, entt::entity e)
-    {
-        (void)r.get_or_emplace<ActiveState>(e);
-        (void)r.get_or_emplace<Visibility>(e);
 
-        r.emplace<WidgetDetail>(e);
-    }
 
-    void on_destroy_Widget(entt::registry& r, entt::entity e)
-    {
-        r.remove<WidgetDetail>(e);
-    }
+void WidgetSystemNode::on_construct_Widget(entt::registry& r, entt::entity e)
+{
+    (void)r.get_or_emplace<ActiveState>(e);
+    (void)r.get_or_emplace<Visibility>(e);
+
+    r.emplace<WidgetDetail>(e);
+}
+
+void WidgetSystemNode::on_destroy_Widget(entt::registry& r, entt::entity e)
+{
+    r.remove<WidgetDetail>(e);
 }
 
 
@@ -54,8 +56,8 @@ WidgetSystemNode::WidgetSystemNode(Registry& in_registry) :
     // configure EnTT to automatically add the necessary components when a Widget is constructed
     auto [lock, registry] = _registry.write();
 
-    registry.on_construct<Widget>().connect<&on_construct_Widget>();
-    registry.on_destroy<Widget>().connect<&on_destroy_Widget>();
+    registry.on_construct<Widget>().connect<&WidgetSystemNode::on_construct_Widget>(*this);
+    registry.on_destroy<Widget>().connect<&WidgetSystemNode::on_destroy_Widget>(*this);
 }
 
 void

@@ -157,6 +157,18 @@ namespace ROCKY_NAMESPACE
 
         // Called when a specific view's properties change (e.g. srs switch)
         void createOrUpdateGeometryForView(ViewIDType, const LineGeometry&, detail::LineGeometryDetail&);
+
+
+        void on_construct_Line(entt::registry& r, entt::entity e);
+        void on_construct_LineStyle(entt::registry& r, entt::entity e);
+        void on_construct_LineGeometry(entt::registry& r, entt::entity e);
+        void on_destroy_LineStyle(entt::registry& r, entt::entity e);
+        void on_destroy_LineStyleDetail(entt::registry& r, entt::entity e);
+        void on_destroy_LineGeometry(entt::registry& r, entt::entity e);
+        void on_destroy_LineGeometryDetail(entt::registry& r, entt::entity e);
+        void on_update_Line(entt::registry& r, entt::entity e);
+        void on_update_LineStyle(entt::registry& r, entt::entity e);
+        void on_update_LineGeometry(entt::registry& r, entt::entity e);
     };
 
 

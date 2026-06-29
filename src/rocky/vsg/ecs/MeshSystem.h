@@ -142,6 +142,23 @@ namespace ROCKY_NAMESPACE
 
         // Called when a new mesh texture shows up
         void addOrUpdateTexture(const MeshTexture&, detail::MeshTextureDetail&, entt::registry&);
+
+
+
+        void on_construct_Mesh(entt::registry& r, entt::entity e);
+        void on_construct_MeshStyle(entt::registry& r, entt::entity e);
+        void on_construct_MeshGeometry(entt::registry& r, entt::entity e);
+        void on_construct_Texture(entt::registry& r, entt::entity e);
+        void on_destroy_MeshStyle(entt::registry& r, entt::entity e);
+        void on_destroy_MeshStyleDetail(entt::registry& r, entt::entity e);
+        void on_destroy_MeshGeometry(entt::registry& r, entt::entity e);
+        void on_destroy_MeshGeometryDetail(entt::registry& r, entt::entity e);
+        void on_destroy_MeshTexture(entt::registry& r, entt::entity e);
+        void on_destroy_MeshTextureDetail(entt::registry& r, entt::entity e);
+        void on_update_Mesh(entt::registry& r, entt::entity e);
+        void on_update_MeshStyle(entt::registry& r, entt::entity e);
+        void on_update_MeshGeometry(entt::registry& r, entt::entity e);
+        void on_update_Texture(entt::registry& r, entt::entity e);
     };
 }
 

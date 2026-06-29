@@ -5,7 +5,6 @@
  */
 #pragma once
 #include <rocky/vsg/ecs/ECSNode.h>
-#include <rocky/vsg/ecs/ECSTypes.h>
 #include <queue>
 
 namespace ROCKY_NAMESPACE
@@ -68,3 +67,5 @@ namespace ROCKY_NAMESPACE
         void on_update_Model(entt::registry& r, entt::entity e);
     };
 }
+
+EVSG_type_name(rocky::ModelSystemNode)

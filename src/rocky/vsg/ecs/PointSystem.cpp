@@ -82,71 +82,67 @@ namespace
         auto& uniforms = *static_cast<PointStyleUniform*>(styleDetail.styleData->dataPointer());
         uniforms.style = PointStyleRecord(); // default style
     }
+}
 
-    // disposal vector processed by the system
-    static std::mutex s_cleanupMutex;
-    static vsg::ref_ptr<vsg::Objects> s_toDispose = vsg::Objects::create();
-    static inline void dispose(vsg::Object* object) {
-        if (object) {
-            std::scoped_lock lock(s_cleanupMutex);
-            s_toDispose->addChild(vsg::ref_ptr<vsg::Object>(object));
-        }
-    }
 
-    void on_construct_Point(entt::registry& r, entt::entity e)
-    {
-        (void)r.get_or_emplace<ActiveState>(e);
-        (void)r.get_or_emplace<Visibility>(e);
-        Point::dirty(r, e);
-    }
-    void on_construct_PointStyle(entt::registry& r, entt::entity e)
-    {
-        r.emplace<PointStyleDetail>(e);
-        PointStyle::dirty(r, e);
-    }
-    void on_construct_PointGeometry(entt::registry& r, entt::entity e)
-    {
-        r.emplace<PointGeometryDetail>(e);
-        PointGeometry::dirty(r, e);
-    }
 
-    void on_destroy_PointStyle(entt::registry& r, entt::entity e)
-    {
-        r.remove<PointStyleDetail>(e);
-    }
-    void on_destroy_PointStyleDetail(entt::registry& r, entt::entity e)
-    {
-        auto& d = r.get<PointStyleDetail>(e);
-        dispose(d.bind);
-        for (auto& pass : d.passes)
-            dispose(pass);
-    }
-    void on_destroy_PointGeometry(entt::registry& r, entt::entity e)
-    {
-        r.remove<PointGeometryDetail>(e);
-    }
-    void on_destroy_PointGeometryDetail(entt::registry& r, entt::entity e)
-    {
-        for (auto& view : r.get<PointGeometryDetail>(e).views)
-        {
-            dispose(view.root);
-            view = {};
-        }
-    }
+void PointSystemNode::on_construct_Point(entt::registry& r, entt::entity e)
+{
+    (void)r.get_or_emplace<ActiveState>(e);
+    (void)r.get_or_emplace<Visibility>(e);
+    Point::dirty(r, e);
+}
+void PointSystemNode::on_construct_PointStyle(entt::registry& r, entt::entity e)
+{
+    r.emplace<PointStyleDetail>(e);
+    PointStyle::dirty(r, e);
+}
+void PointSystemNode::on_construct_PointGeometry(entt::registry& r, entt::entity e)
+{
+    r.emplace<PointGeometryDetail>(e);
+    PointGeometry::dirty(r, e);
+}
 
-    void on_update_Point(entt::registry& r, entt::entity e)
+void PointSystemNode::on_destroy_PointStyle(entt::registry& r, entt::entity e)
+{
+    r.remove<PointStyleDetail>(e);
+}
+void PointSystemNode::on_destroy_PointStyleDetail(entt::registry& r, entt::entity e)
+{
+    auto& d = r.get<PointStyleDetail>(e);
+    dispose(d.bind);
+    for (auto& pass : d.passes)
+        dispose(pass);
+}
+void PointSystemNode::on_destroy_PointGeometry(entt::registry& r, entt::entity e)
+{
+    r.remove<PointGeometryDetail>(e);
+}
+void PointSystemNode::on_destroy_PointGeometryDetail(entt::registry& r, entt::entity e)
+{
+    for (auto& view : r.get<PointGeometryDetail>(e).views)
     {
-        Point::dirty(r, e);
-    }
-    void on_update_PointStyle(entt::registry& r, entt::entity e)
-    {
-        PointStyle::dirty(r, e);
-    }
-    void on_update_PointGeometry(entt::registry& r, entt::entity e)
-    {
-        PointGeometry::dirty(r, e);
+        dispose(view.root);
+        view = {};
     }
 }
+
+void PointSystemNode::on_update_Point(entt::registry& r, entt::entity e)
+{
+    Point::dirty(r, e);
+}
+void PointSystemNode::on_update_PointStyle(entt::registry& r, entt::entity e)
+{
+    PointStyle::dirty(r, e);
+}
+void PointSystemNode::on_update_PointGeometry(entt::registry& r, entt::entity e)
+{
+    PointGeometry::dirty(r, e);
+}
+
+
+
+
 
 PointSystemNode::PointSystemNode(Registry& registry) :
     Inherit(registry)
@@ -154,18 +150,16 @@ PointSystemNode::PointSystemNode(Registry& registry) :
     _registry.write([&](entt::registry& r)
         {
             // install the ecs callbacks for Points
-            r.on_construct<Point>().connect<&on_construct_Point>();
-            r.on_construct<PointStyle>().connect<&on_construct_PointStyle>();
-            r.on_construct<PointGeometry>().connect<&on_construct_PointGeometry>();
-
-            r.on_update<Point>().connect<&on_update_Point>();
-            r.on_update<PointStyle>().connect<&on_update_PointStyle>();
-            r.on_update<PointGeometry>().connect<&on_update_PointGeometry>();
-
-            r.on_destroy<PointStyle>().connect<&on_destroy_PointStyle>();
-            r.on_destroy<PointStyleDetail>().connect<&on_destroy_PointStyleDetail>();
-            r.on_destroy<PointGeometry>().connect<&on_destroy_PointGeometry>();
-            r.on_destroy<PointGeometryDetail>().connect<&on_destroy_PointGeometryDetail>();
+            r.on_construct<Point>().connect<&PointSystemNode::on_construct_Point>(*this);
+            r.on_construct<PointStyle>().connect<&PointSystemNode::on_construct_PointStyle>(*this);
+            r.on_construct<PointGeometry>().connect<&PointSystemNode::on_construct_PointGeometry>(*this);
+            r.on_update<Point>().connect<&PointSystemNode::on_update_Point>(*this);
+            r.on_update<PointStyle>().connect<&PointSystemNode::on_update_PointStyle>(*this);
+            r.on_update<PointGeometry>().connect<&PointSystemNode::on_update_PointGeometry>(*this);
+            r.on_destroy<PointStyle>().connect<&PointSystemNode::on_destroy_PointStyle>(*this);
+            r.on_destroy<PointStyleDetail>().connect<&PointSystemNode::on_destroy_PointStyleDetail>(*this);
+            r.on_destroy<PointGeometry>().connect<&PointSystemNode::on_destroy_PointGeometry>(*this);
+            r.on_destroy<PointGeometryDetail>().connect<&PointSystemNode::on_destroy_PointGeometryDetail>(*this);
 
             // Set up the dirty tracking.
             auto e = r.create();
@@ -563,13 +557,6 @@ void
 PointSystemNode::update(VSGContext vsgcontext)
 {
     if (status.failed()) return;
-
-    // start by disposing of any old static objects
-    if (!s_toDispose->children.empty())
-    {
-        dispose(s_toDispose);
-        s_toDispose = vsg::Objects::create();
-    }
 
     _registry.read([&](entt::registry& reg)
         {

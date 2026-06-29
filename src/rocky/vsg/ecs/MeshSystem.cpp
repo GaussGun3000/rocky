@@ -99,89 +99,77 @@ namespace
     }
 }
 
-namespace
+
+void MeshSystemNode::on_construct_Mesh(entt::registry& r, entt::entity e)
 {
-    // disposal vector processed by the system
-    static std::mutex s_cleanupMutex;
-    static vsg::ref_ptr<vsg::Objects> s_toDispose = vsg::Objects::create();
-    static inline void dispose(vsg::Object* object) {
-        if (object) {
-            std::scoped_lock lock(s_cleanupMutex);
-            s_toDispose->addChild(vsg::ref_ptr<vsg::Object>(object));
-        }
-    }
+    (void)r.get_or_emplace<ActiveState>(e);
+    (void)r.get_or_emplace<Visibility>(e);
+    Mesh::dirty(r, e);
+}
+void MeshSystemNode::on_construct_MeshStyle(entt::registry& r, entt::entity e)
+{
+    r.emplace<MeshStyleDetail>(e);
+    MeshStyle::dirty(r, e);
+}
+void MeshSystemNode::on_construct_MeshGeometry(entt::registry& r, entt::entity e)
+{
+    r.emplace<MeshGeometryDetail>(e);
+    MeshGeometry::dirty(r, e);
+}
+void MeshSystemNode::on_construct_Texture(entt::registry& r, entt::entity e)
+{
+    (void)r.get_or_emplace<MeshTextureDetail>(e);
+    MeshTexture::dirty(r, e);
+}
 
-    void on_construct_Mesh(entt::registry& r, entt::entity e)
+void MeshSystemNode::on_destroy_MeshStyle(entt::registry& r, entt::entity e)
+{
+    r.remove<MeshStyleDetail>(e);
+}
+void MeshSystemNode::on_destroy_MeshStyleDetail(entt::registry& r, entt::entity e)
+{
+    auto& d = r.get<MeshStyleDetail>(e);
+    dispose(d.bind);
+    for (auto& pass : d.passes)
+        dispose(pass);
+}
+void MeshSystemNode::on_destroy_MeshGeometry(entt::registry& r, entt::entity e)
+{
+    r.remove<MeshGeometryDetail>(e);
+}
+void MeshSystemNode::on_destroy_MeshGeometryDetail(entt::registry& r, entt::entity e)
+{
+    for (auto& view : r.get<MeshGeometryDetail>(e).views)
     {
-        (void)r.get_or_emplace<ActiveState>(e);
-        (void)r.get_or_emplace<Visibility>(e);
-        Mesh::dirty(r, e);
+        dispose(view.root);
+        view = {};
     }
-    void on_construct_MeshStyle(entt::registry& r, entt::entity e)
-    {
-        r.emplace<MeshStyleDetail>(e);
-        MeshStyle::dirty(r, e);
-    }
-    void on_construct_MeshGeometry(entt::registry& r, entt::entity e)
-    {
-        r.emplace<MeshGeometryDetail>(e);
-        MeshGeometry::dirty(r, e);
-    }
-    void on_construct_Texture(entt::registry& r, entt::entity e)
-    {
-        (void)r.get_or_emplace<MeshTextureDetail>(e);
-        MeshTexture::dirty(r, e);
-    }
-
-    void on_destroy_MeshStyle(entt::registry& r, entt::entity e)
-    {
-        r.remove<MeshStyleDetail>(e);
-    }
-    void on_destroy_MeshStyleDetail(entt::registry& r, entt::entity e)
-    {
-        auto& d = r.get<MeshStyleDetail>(e);
-        dispose(d.bind);
-        for(auto& pass : d.passes)
-            dispose(pass);
-    }
-    void on_destroy_MeshGeometry(entt::registry& r, entt::entity e)
-    {
-        r.remove<MeshGeometryDetail>(e);
-    }
-    void on_destroy_MeshGeometryDetail(entt::registry& r, entt::entity e)
-    {
-        for (auto& view : r.get<MeshGeometryDetail>(e).views)
-        {
-            dispose(view.root);
-            view = {};
-        }
-    }
-    void on_destroy_MeshTexture(entt::registry& r, entt::entity e)
-    {
-        r.remove<MeshTextureDetail>(e);
-    }
-    void on_destroy_MeshTextureDetail(entt::registry& r, entt::entity e)
-    {
-        //nop
-    }
+}
+void MeshSystemNode::on_destroy_MeshTexture(entt::registry& r, entt::entity e)
+{
+    r.remove<MeshTextureDetail>(e);
+}
+void MeshSystemNode::on_destroy_MeshTextureDetail(entt::registry& r, entt::entity e)
+{
+    //nop
+}
 
 
-    void on_update_Mesh(entt::registry& r, entt::entity e)
-    {
-        Mesh::dirty(r, e);
-    }
-    void on_update_MeshStyle(entt::registry& r, entt::entity e)
-    {
-        MeshStyle::dirty(r, e);
-    }
-    void on_update_MeshGeometry(entt::registry& r, entt::entity e)
-    {
-        MeshGeometry::dirty(r, e);
-    }
-    void on_update_Texture(entt::registry& r, entt::entity e)
-    {
-        MeshTexture::dirty(r, e);
-    }
+void MeshSystemNode::on_update_Mesh(entt::registry& r, entt::entity e)
+{
+    Mesh::dirty(r, e);
+}
+void MeshSystemNode::on_update_MeshStyle(entt::registry& r, entt::entity e)
+{
+    MeshStyle::dirty(r, e);
+}
+void MeshSystemNode::on_update_MeshGeometry(entt::registry& r, entt::entity e)
+{
+    MeshGeometry::dirty(r, e);
+}
+void MeshSystemNode::on_update_Texture(entt::registry& r, entt::entity e)
+{
+    MeshTexture::dirty(r, e);
 }
 
 
@@ -191,22 +179,22 @@ MeshSystemNode::MeshSystemNode(Registry& registry) :
     registry.write([&](entt::registry& r)
         {
             // install the ENTT callbacks for managing internal data:
-            r.on_construct<Mesh>().connect<&on_construct_Mesh>();
-            r.on_construct<MeshStyle>().connect<&on_construct_MeshStyle>();
-            r.on_construct<MeshGeometry>().connect<&on_construct_MeshGeometry>();
-            r.on_construct<MeshTexture>().connect<&on_construct_Texture>();
+            r.on_construct<Mesh>().connect<&MeshSystemNode::on_construct_Mesh>(*this);
+            r.on_construct<MeshStyle>().connect<&MeshSystemNode::on_construct_MeshStyle>(*this);
+            r.on_construct<MeshGeometry>().connect<&MeshSystemNode::on_construct_MeshGeometry>(*this);
+            r.on_construct<MeshTexture>().connect<&MeshSystemNode::on_construct_Texture>(*this);
 
-            r.on_update<Mesh>().connect<&on_update_Mesh>();
-            r.on_update<MeshStyle>().connect<&on_update_MeshStyle>();
-            r.on_update<MeshGeometry>().connect<&on_update_MeshGeometry>();
-            r.on_update<MeshTexture>().connect<&on_update_Texture>();
+            r.on_update<Mesh>().connect<&MeshSystemNode::on_update_Mesh>(*this);
+            r.on_update<MeshStyle>().connect<&MeshSystemNode::on_update_MeshStyle>(*this);
+            r.on_update<MeshGeometry>().connect<&MeshSystemNode::on_update_MeshGeometry>(*this);
+            r.on_update<MeshTexture>().connect<&MeshSystemNode::on_update_Texture>(*this);
 
-            r.on_destroy<MeshStyle>().connect<&on_destroy_MeshStyle>();
-            r.on_destroy<MeshStyleDetail>().connect<&on_destroy_MeshStyleDetail>();
-            r.on_destroy<MeshGeometry>().connect<&on_destroy_MeshGeometry>();
-            r.on_destroy<MeshGeometryDetail>().connect<&on_destroy_MeshGeometryDetail>();
-            r.on_destroy<MeshTexture>().connect<&on_destroy_MeshTexture>();
-            r.on_destroy<MeshTextureDetail>().connect<&on_destroy_MeshTextureDetail>();
+            r.on_destroy<MeshStyle>().connect<&MeshSystemNode::on_destroy_MeshStyle>(*this);
+            r.on_destroy<MeshStyleDetail>().connect<&MeshSystemNode::on_destroy_MeshStyleDetail>(*this);
+            r.on_destroy<MeshGeometry>().connect<&MeshSystemNode::on_destroy_MeshGeometry>(*this);
+            r.on_destroy<MeshGeometryDetail>().connect<&MeshSystemNode::on_destroy_MeshGeometryDetail>(*this);
+            r.on_destroy<MeshTexture>().connect<&MeshSystemNode::on_destroy_MeshTexture>(*this);
+            r.on_destroy<MeshTextureDetail>().connect<&MeshSystemNode::on_destroy_MeshTextureDetail>(*this);
 
             // Set up the dirty tracking.
             auto e = r.create();
@@ -695,13 +683,6 @@ MeshSystemNode::update(VSGContext vsgcontext)
 {
     if (status.failed())
         return;
-
-    // start by disposing of any old static objects
-    if (!s_toDispose->children.empty())
-    {
-        dispose(s_toDispose);
-        s_toDispose = vsg::Objects::create();
-    }
 
     // process any objects marked dirty
     _registry.read([&](entt::registry& reg)

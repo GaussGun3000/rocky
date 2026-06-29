@@ -15,11 +15,11 @@ namespace ROCKY_NAMESPACE
     /**
     * ECS System that processes Transform and TransformDetail components.
     */
-    class ROCKY_EXPORT TransformSystem : public vsg::Inherit<vsg::Node, TransformSystem>, public System
+    class ROCKY_EXPORT TransformSystemNode : public vsg::Inherit<vsg::Node, TransformSystemNode>, public System
     {
     public:
         //! Construct the system
-        TransformSystem(Registry& r);
+        TransformSystemNode(Registry& r);
 
         void update(VSGContext vsgcontext) override;
 
@@ -37,7 +37,12 @@ namespace ROCKY_NAMESPACE
 
         // Per-view data, calculated during the record traversal
         mutable ViewLocal<ViewDetail> views;
+
+
+        void on_construct_Transform(entt::registry& r, entt::entity e);
+        void on_update_Transform(entt::registry& r, entt::entity e);
+        void on_destroy_Transform(entt::registry& r, entt::entity e);
     };
 }
 
-EVSG_type_name(rocky::TransformSystem)
+EVSG_type_name(rocky::TransformSystemNode)

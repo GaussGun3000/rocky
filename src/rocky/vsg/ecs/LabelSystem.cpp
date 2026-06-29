@@ -15,6 +15,26 @@
 
 using namespace ROCKY_NAMESPACE;
 
+namespace ROCKY_NAMESPACE
+{
+    namespace detail
+    {
+        struct LabelDetail
+        {
+        };
+
+        struct LabelStyleDetail
+        {
+            std::string fontName;
+            ViewLocal<ImFont*> fonts;
+            ImGuiImage iconImage;
+
+            LabelStyleDetail() {
+                fonts.fill(nullptr);
+            }
+        };
+    }
+}
 
 LabelSystem::LabelSystem(Registry& registry) :
     Inherit(registry)

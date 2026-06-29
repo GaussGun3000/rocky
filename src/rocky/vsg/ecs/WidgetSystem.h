@@ -36,6 +36,10 @@ namespace ROCKY_NAMESPACE
     private:
 
         std::unordered_set<entt::entity> _focusedEntities;
+
+
+        void on_construct_Widget(entt::registry& r, entt::entity e);
+        void on_destroy_Widget(entt::registry& r, entt::entity e);
     };
 }
 

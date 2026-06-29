@@ -8,38 +8,38 @@
 
 using namespace ROCKY_NAMESPACE;
 
-namespace
+
+void TransformSystemNode::on_construct_Transform(entt::registry& r, entt::entity e)
 {
-    void on_construct_Transform(entt::registry& r, entt::entity e)
-    {
-        r.emplace<TransformDetail>(e);
-    }
-
-    void on_update_Transform(entt::registry& r, entt::entity e)
-    {
-        (void)r.get_or_emplace<TransformDetail>(e);
-    }
-
-    void on_destroy_Transform(entt::registry& r, entt::entity e)
-    {
-        r.remove<TransformDetail>(e);
-    }
+    r.emplace<TransformDetail>(e);
 }
 
-TransformSystem::TransformSystem(Registry& r) : System(r)
+void TransformSystemNode::on_update_Transform(entt::registry& r, entt::entity e)
+{
+    (void)r.get_or_emplace<TransformDetail>(e);
+}
+
+void TransformSystemNode::on_destroy_Transform(entt::registry& r, entt::entity e)
+{
+    r.remove<TransformDetail>(e);
+}
+
+
+
+TransformSystemNode::TransformSystemNode(Registry& r) : System(r)
 {
     // configure EnTT to automatically add the necessary components when a Transform is constructed
     auto [lock, registry] = r.write();
 
     // Each Transform component automatically gets a TransformDetail component
     // that tracks internal per-view transform information.
-    registry.on_construct<Transform>().connect<&on_construct_Transform>();
-    registry.on_update<Transform>().connect<&on_update_Transform>();
-    registry.on_destroy<Transform>().connect<&on_destroy_Transform>();
+    registry.on_construct<Transform>().connect<&TransformSystemNode::on_construct_Transform>(*this);
+    registry.on_update<Transform>().connect<&TransformSystemNode::on_update_Transform>(*this);
+    registry.on_destroy<Transform>().connect<&TransformSystemNode::on_destroy_Transform>(*this);
 }
 
 void
-TransformSystem::update(VSGContext context)
+TransformSystemNode::update(VSGContext context)
 {
     auto [lock, registry] = _registry.read();
 
@@ -54,7 +54,7 @@ TransformSystem::update(VSGContext context)
 }
 
 void
-TransformSystem::traverse(vsg::RecordTraversal& record) const
+TransformSystemNode::traverse(vsg::RecordTraversal& record) const
 {
     auto [lock, registry] = _registry.read();
 

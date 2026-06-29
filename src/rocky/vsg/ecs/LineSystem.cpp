@@ -85,71 +85,69 @@ namespace
         auto& uniforms = *static_cast<LineStyleUniform*>(styleDetail.styleData->dataPointer());
         uniforms.style = LineStyleRecord(); // default style
     }
+}
 
-    // disposal vector processed by the system
-    static std::mutex s_cleanupMutex;
-    static vsg::ref_ptr<vsg::Objects> s_toDispose = vsg::Objects::create();
-    static inline void dispose(vsg::Object* object) {
-        if (object) {
-            std::scoped_lock lock(s_cleanupMutex);
-            s_toDispose->addChild(vsg::ref_ptr<vsg::Object>(object));
-        }
-    }
 
-    void on_construct_Line(entt::registry& r, entt::entity e)
-    {
-        (void) r.get_or_emplace<ActiveState>(e);
-        (void) r.get_or_emplace<Visibility>(e);
-        Line::dirty(r, e);
-    }
-    void on_construct_LineStyle(entt::registry& r, entt::entity e)
-    {
-        r.emplace<LineStyleDetail>(e);
-        LineStyle::dirty(r, e);
-    }
-    void on_construct_LineGeometry(entt::registry& r, entt::entity e)
-    {
-        r.emplace<LineGeometryDetail>(e);
-        LineGeometry::dirty(r, e);
-    }
 
-    void on_destroy_LineStyle(entt::registry& r, entt::entity e)
-    {
-        r.remove<LineStyleDetail>(e);
-    }
-    void on_destroy_LineStyleDetail(entt::registry& r, entt::entity e)
-    {
-        auto& d = r.get<LineStyleDetail>(e);
-        dispose(d.bind);
-        for (auto& pass : d.passes)
-            dispose(pass);
-    }
-    void on_destroy_LineGeometry(entt::registry& r, entt::entity e)
-    {
-        r.remove<LineGeometryDetail>(e);
-    }
-    void on_destroy_LineGeometryDetail(entt::registry& r, entt::entity e)
-    {
-        for (auto& view : r.get<LineGeometryDetail>(e).views)
-        {
-            dispose(view.root);
-            view = {};
-        }
-    }
 
-    void on_update_Line(entt::registry& r, entt::entity e)
+
+void LineSystemNode::on_construct_Line(entt::registry& r, entt::entity e)
+{
+    (void)r.get_or_emplace<ActiveState>(e);
+    (void)r.get_or_emplace<Visibility>(e);
+    Line::dirty(r, e);
+}
+void LineSystemNode::on_construct_LineStyle(entt::registry& r, entt::entity e)
+{
+    r.emplace<LineStyleDetail>(e);
+    LineStyle::dirty(r, e);
+}
+void LineSystemNode::on_construct_LineGeometry(entt::registry& r, entt::entity e)
+{
+    r.emplace<LineGeometryDetail>(e);
+    LineGeometry::dirty(r, e);
+}
+
+void LineSystemNode::on_destroy_LineStyle(entt::registry& r, entt::entity e)
+{
+    r.remove<LineStyleDetail>(e);
+}
+void LineSystemNode::on_destroy_LineStyleDetail(entt::registry& r, entt::entity e)
+{
+    auto& d = r.get<LineStyleDetail>(e);
+    dispose(d.bind);
+    for (auto& pass : d.passes)
+        dispose(pass);
+}
+void LineSystemNode::on_destroy_LineGeometry(entt::registry& r, entt::entity e)
+{
+    r.remove<LineGeometryDetail>(e);
+}
+void LineSystemNode::on_destroy_LineGeometryDetail(entt::registry& r, entt::entity e)
+{
+    for (auto& view : r.get<LineGeometryDetail>(e).views)
     {
-        Line::dirty(r, e);
-    }
-    void on_update_LineStyle(entt::registry& r, entt::entity e)
-    {
-        LineStyle::dirty(r, e);
-    }
-    void on_update_LineGeometry(entt::registry& r, entt::entity e)
-    {
-        LineGeometry::dirty(r, e);
+        dispose(view.root);
+        view = {};
     }
 }
+
+void LineSystemNode::on_update_Line(entt::registry& r, entt::entity e)
+{
+    Line::dirty(r, e);
+}
+void LineSystemNode::on_update_LineStyle(entt::registry& r, entt::entity e)
+{
+    LineStyle::dirty(r, e);
+}
+void LineSystemNode::on_update_LineGeometry(entt::registry& r, entt::entity e)
+{
+    LineGeometry::dirty(r, e);
+}
+
+
+
+
 
 LineSystemNode::LineSystemNode(Registry& registry) :
     Inherit(registry)
@@ -157,18 +155,16 @@ LineSystemNode::LineSystemNode(Registry& registry) :
     _registry.write([&](entt::registry& r)
         {
             // install the ecs callbacks for Lines
-            r.on_construct<Line>().connect<&on_construct_Line>();
-            r.on_construct<LineStyle>().connect<&on_construct_LineStyle>();
-            r.on_construct<LineGeometry>().connect<&on_construct_LineGeometry>();
-
-            r.on_update<Line>().connect<&on_update_Line>();
-            r.on_update<LineStyle>().connect<&on_update_LineStyle>();
-            r.on_update<LineGeometry>().connect<&on_update_LineGeometry>();
-
-            r.on_destroy<LineStyle>().connect<&on_destroy_LineStyle>();
-            r.on_destroy<LineStyleDetail>().connect<&on_destroy_LineStyleDetail>();
-            r.on_destroy<LineGeometry>().connect<&on_destroy_LineGeometry>();
-            r.on_destroy<LineGeometryDetail>().connect<&on_destroy_LineGeometryDetail>();
+            r.on_construct<Line>().connect<&LineSystemNode::on_construct_Line>(*this);
+            r.on_construct<LineStyle>().connect<&LineSystemNode::on_construct_LineStyle>(*this);
+            r.on_construct<LineGeometry>().connect<&LineSystemNode::on_construct_LineGeometry>(*this);
+            r.on_update<Line>().connect<&LineSystemNode::on_update_Line>(*this);
+            r.on_update<LineStyle>().connect<&LineSystemNode::on_update_LineStyle>(*this);
+            r.on_update<LineGeometry>().connect<&LineSystemNode::on_update_LineGeometry>(*this);
+            r.on_destroy<LineStyle>().connect<&LineSystemNode::on_destroy_LineStyle>(*this);
+            r.on_destroy<LineStyleDetail>().connect<&LineSystemNode::on_destroy_LineStyleDetail>(*this);
+            r.on_destroy<LineGeometry>().connect<&LineSystemNode::on_destroy_LineGeometry>(*this);
+            r.on_destroy<LineGeometryDetail>().connect<&LineSystemNode::on_destroy_LineGeometryDetail>(*this);
 
             // Set up the dirty tracking.
             auto e = r.create();
@@ -570,13 +566,6 @@ LineSystemNode::update(VSGContext vsgcontext)
 {
     if (status.failed())
         return;
-
-    // start by disposing of any old static objects
-    if (!s_toDispose->children.empty())
-    {
-        dispose(s_toDispose);
-        s_toDispose = vsg::Objects::create();
-    }
 
     _registry.read([&](entt::registry& reg)
         {

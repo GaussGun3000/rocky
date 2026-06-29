@@ -117,7 +117,7 @@ ECSNode::ECSNode(Registry& reg, bool addDefaultSystems) :
 {
     if (addDefaultSystems)
     {
-        add(TransformSystem::create(registry));
+        add(TransformSystemNode::create(registry));
         add(NodeSystemNode::create(registry));
         add(ModelSystemNode::create(registry));
         add(MeshSystemNode::create(registry));

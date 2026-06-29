@@ -49,24 +49,6 @@ namespace ROCKY_NAMESPACE
 
         ImFont* getOrCreateFont(const std::string&, ImGuiContext*);
     };
-
-    namespace detail
-    {
-        struct LabelDetail
-        {
-        };
-
-        struct LabelStyleDetail
-        {   
-            std::string fontName;
-            ViewLocal<ImFont*> fonts;
-            ImGuiImage iconImage;
-
-            LabelStyleDetail() {
-                fonts.fill(nullptr);
-            }
-        };
-    }
 }
 
 #endif // ROCKY_HAS_IMGUI

@@ -138,6 +138,18 @@ namespace ROCKY_NAMESPACE
 
         // Called when a specific view's properties change (e.g. srs switch)
         void createOrUpdateGeometryForView(ViewIDType, const PointGeometry&, detail::PointGeometryDetail&);
+
+
+        void on_construct_Point(entt::registry& r, entt::entity e);
+        void on_construct_PointStyle(entt::registry& r, entt::entity e);
+        void on_construct_PointGeometry(entt::registry& r, entt::entity e);
+        void on_destroy_PointStyle(entt::registry& r, entt::entity e);
+        void on_destroy_PointStyleDetail(entt::registry& r, entt::entity e);
+        void on_destroy_PointGeometry(entt::registry& r, entt::entity e);
+        void on_destroy_PointGeometryDetail(entt::registry& r, entt::entity e);
+        void on_update_Point(entt::registry& r, entt::entity e);
+        void on_update_PointStyle(entt::registry& r, entt::entity e);
+        void on_update_PointGeometry(entt::registry& r, entt::entity e);
     };
 
 
