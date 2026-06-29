@@ -59,6 +59,18 @@ auto Demo_Camera = [](Application& app)
                     }
                 }
 
+                if (!ortho)
+                {
+                    double fovy = camera->projectionMatrix->cast<vsg::Perspective>()->fieldOfViewY;
+                    if (ImGuiLTable::SliderDouble("FOV", &fovy, 1.0f, 120.0f, "%.0f"))
+                    {
+                        app.onNextUpdate([camera, fovy]()
+                            {
+                                camera->projectionMatrix->cast<vsg::Perspective>()->fieldOfViewY = fovy;
+                            });
+                    }
+                }
+
                 ImGuiLTable::Checkbox("Lock azimuth", &manip->settings.lockAzimuthWhilePanning);
                 ImGuiLTable::Checkbox("Zoom to mouse", &manip->settings.zoomToMouse);
 
